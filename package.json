@@ -1,0 +1,37 @@
+{
+    "name": "dynamo-formation",
+    "version": "1.0.0",
+    "main": "out/index.js",
+    "types": "out/index.d.ts",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "tsc"
+    },
+    "keywords": [],
+    "author": "AeroCode",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^13.1.1",
+        "prettier": "^1.19.1",
+        "ts-node": "^8.5.4",
+        "tsc-watch": "^4.0.0",
+        "typescript": "^3.7.4"
+    },
+    "dependencies": {
+        "aws-sdk": "^2.596.0"
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 120,
+        "arrowParens": "always"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/MyAeroCode/dynamo-formation.git"
+    },
+    "bugs": {
+        "url": "https://github.com/MyAeroCode/dynamo-formation/issues"
+    },
+    "homepage": "https://github.com/MyAeroCode/dynamo-formation#readme",
+    "description": ""
+}
