@@ -21,13 +21,13 @@ exports.defaultDatatype = (arg) => {
 };
 // Using the value of the itself.
 //
-exports.defaultSerialize = (arg) => {
+exports.defaultSerializer = (arg) => {
     const serialized = arg.source[arg.sourcePropertyName];
     return serialized;
 };
 // Using the value of the described.
 //
-exports.defaultDeserialize = (arg) => {
+exports.defaultDeserializer = (arg) => {
     return arg.dynamoDatatype == type_1.Datatype.NESTED
         ? arg.dynamo[arg.dynamoPropertyName]
         : arg.dynamo[arg.dynamoPropertyName][arg.dynamoDatatype];

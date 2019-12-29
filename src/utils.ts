@@ -24,14 +24,14 @@ export const defaultDatatype: DatatypeOrChunk<any> = (arg: DatatypeArg<any>): Da
 
 // Using the value of the itself.
 //
-export const defaultSerialize: Serializer<any> = (arg: SerializerArg<any>) => {
+export const defaultSerializer: Serializer<any> = (arg: SerializerArg<any>) => {
     const serialized = arg.source[arg.sourcePropertyName];
     return serialized;
 };
 
 // Using the value of the described.
 //
-export const defaultDeserialize: Deserializer<any> = (arg: DeserializerArg): any => {
+export const defaultDeserializer: Deserializer<any> = (arg: DeserializerArg): any => {
     return arg.dynamoDatatype == Datatype.NESTED
         ? arg.dynamo[arg.dynamoPropertyName]
         : arg.dynamo[arg.dynamoPropertyName][arg.dynamoDatatype];

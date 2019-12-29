@@ -9,7 +9,7 @@ import {
     DeserializerArg
 } from "./type";
 import Metadata from "./metadata";
-import { fetchFromChunkOrValue, convertToDynamoPrimitive, convertToJsPrimitive } from "./utils";
+import { fetchFromChunkOrValue, convertToDynamoPrimitive, convertToJsPrimitive, defaultSerializer } from "./utils";
 
 // Performs the interconversion between DynamoItem and the object.
 //
@@ -119,10 +119,15 @@ class DynamoFormation {
             const jsPrimitive = convertToJsPrimitive(deserialized, dynamoDatatype, nextClassObject);
 
             // merge.
-            const objectField: object = {
-                [objectPropertyName]: jsPrimitive
-            };
-            Object.assign(holder, objectField);
+            if (target.serializer !== defaultSerializer) {
+                Object.assign(holder, deserialized);
+            } else {
+                const jsPrimitive = convertToJsPrimitive(deserialized, dynamoDatatype, nextClassObject);
+                const objectField: object = {
+                    [objectPropertyName]: jsPrimitive
+                };
+                Object.assign(holder, objectField);
+            }
         }
         return holder;
     }

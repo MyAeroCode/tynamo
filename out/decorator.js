@@ -15,9 +15,9 @@ function DynamoField(dynamoFieldType, args) {
         if (!args.datatype)
             args.datatype = utils_1.defaultDatatype;
         if (!args.serializer)
-            args.serializer = utils_1.defaultSerialize;
+            args.serializer = utils_1.defaultSerializer;
         if (!args.deserializer)
-            args.deserializer = utils_1.defaultDeserialize;
+            args.deserializer = utils_1.defaultDeserializer;
         if (!args.propertyName)
             args.propertyName = objectPropertyName.toString();
         const descriptor = {

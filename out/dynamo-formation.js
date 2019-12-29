@@ -113,10 +113,16 @@ class DynamoFormation {
             const nextClassObject = Reflect.getMetadata("design:type", holder, objectPropertyName);
             const jsPrimitive = utils_1.convertToJsPrimitive(deserialized, dynamoDatatype, nextClassObject);
             // merge.
-            const objectField = {
-                [objectPropertyName]: jsPrimitive
-            };
-            Object.assign(holder, objectField);
+            if (target.serializer !== utils_1.defaultSerializer) {
+                Object.assign(holder, deserialized);
+            }
+            else {
+                const jsPrimitive = utils_1.convertToJsPrimitive(deserialized, dynamoDatatype, nextClassObject);
+                const objectField = {
+                    [objectPropertyName]: jsPrimitive
+                };
+                Object.assign(holder, objectField);
+            }
         }
         return holder;
     }
