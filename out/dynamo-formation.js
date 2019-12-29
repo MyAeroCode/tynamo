@@ -44,8 +44,8 @@ class DynamoFormation {
         const dynamoItem = {};
         for (const target of fields) {
             // fetch from chunk or value.
-            const dynamoPropertyName = utils_1.fetchFromChunkOrValue(target.dynamoPropertyName, undefined);
-            const objectPropertyName = utils_1.fetchFromChunkOrValue(target.objectPropertyName, undefined);
+            const dynamoPropertyName = target.dynamoPropertyName;
+            const objectPropertyName = target.objectPropertyName;
             const datatypeArg = {
                 source: object,
                 sourcePropertyName: objectPropertyName
@@ -58,29 +58,52 @@ class DynamoFormation {
             const serialized = utils_1.fetchFromChunkOrValue(target.serializer, serializerArg);
             const dynamoPrimitive = utils_1.convertToDynamoPrimitive(serialized, dynamoDatatype);
             // merge.
-            const dynamoField = dynamoDatatype == type_1.Datatype.NESTED
-                ? {
-                    [dynamoPropertyName]: dynamoPrimitive
-                }
+            const dynamoField = dynamoDatatype == type_1.Datatype.INJECT
+                ? dynamoPrimitive
                 : {
                     [dynamoPropertyName]: {
                         [dynamoDatatype]: dynamoPrimitive
                     }
                 };
+            let realPropertyName = "";
+            for (const key in dynamoField) {
+                realPropertyName = key;
+            }
+            if (dynamoItem[realPropertyName] != undefined) {
+                throw new Error(`Duplicate name while doing INJECT. [${object.constructor.name}.${realPropertyName}]`);
+            }
             Object.assign(dynamoItem, dynamoField);
         }
         return dynamoItem;
     }
     // Convert to object.
     //
-    deformation(dynamo, classObject) {
+    deformation(dynamo, classObject, context) {
         // Primitive check.
-        if (dynamo.N)
-            return Number.parseFloat(dynamo.N); // it must number.
+        if (context && context.dynamoDatatype != type_1.Datatype.INJECT) {
+            const value = dynamo[context.dynamoPropertyName][context.dynamoDatatype];
+            return utils_1.convertToJsPrimitive(value, context.dynamoDatatype);
+        }
         if (dynamo.S)
-            return dynamo.S; // it must string.
+            return utils_1.convertToJsPrimitive(dynamo.S, type_1.Datatype.S);
+        if (dynamo.N)
+            return utils_1.convertToJsPrimitive(dynamo.N, type_1.Datatype.N);
+        if (dynamo.B)
+            return utils_1.convertToJsPrimitive(dynamo.B, type_1.Datatype.B);
+        if (dynamo.SS)
+            return utils_1.convertToJsPrimitive(dynamo.SS, type_1.Datatype.SS);
+        if (dynamo.NS)
+            return utils_1.convertToJsPrimitive(dynamo.NS, type_1.Datatype.NS);
+        if (dynamo.BS)
+            return utils_1.convertToJsPrimitive(dynamo.BS, type_1.Datatype.BS);
+        if (dynamo.M)
+            return utils_1.convertToJsPrimitive(dynamo.M, type_1.Datatype.M);
+        if (dynamo.L)
+            return utils_1.convertToJsPrimitive(dynamo.L, type_1.Datatype.L);
+        if (dynamo.NULL)
+            return utils_1.convertToJsPrimitive(dynamo.NULL, type_1.Datatype.NULL);
         if (dynamo.BOOL)
-            return dynamo.BOOL; // it must boolean.
+            return utils_1.convertToJsPrimitive(dynamo.BOOL, type_1.Datatype.BOOL);
         // Validation check.
         // Is it registered in the metadata?
         const holder = new classObject();
@@ -96,30 +119,30 @@ class DynamoFormation {
             targets.push(...table.attrs.values());
         for (const target of targets) {
             // fetch from chunk or value.
-            const dynamoPropertyName = utils_1.fetchFromChunkOrValue(target.dynamoPropertyName, undefined);
-            const objectPropertyName = utils_1.fetchFromChunkOrValue(target.objectPropertyName, undefined);
+            const dynamoPropertyName = target.dynamoPropertyName;
+            const objectPropertyName = target.objectPropertyName;
             const datatypeArg = {
                 source: holder,
                 sourcePropertyName: objectPropertyName
             };
             const dynamoDatatype = utils_1.fetchFromChunkOrValue(target.datatype, datatypeArg);
             const deserializerArg = {
+                object: classObject,
                 dynamo: dynamo,
                 dynamoDatatype: dynamoDatatype,
                 dynamoPropertyName: dynamoPropertyName,
                 sourcePropertyName: objectPropertyName
             };
-            const deserialized = utils_1.fetchFromChunkOrValue(target.deserializer, deserializerArg);
             const nextClassObject = Reflect.getMetadata("design:type", holder, objectPropertyName);
-            const jsPrimitive = utils_1.convertToJsPrimitive(deserialized, dynamoDatatype, nextClassObject);
             // merge.
             if (target.serializer !== utils_1.defaultSerializer) {
+                const deserialized = utils_1.fetchFromChunkOrValue(target.deserializer, deserializerArg);
                 Object.assign(holder, deserialized);
             }
             else {
-                const jsPrimitive = utils_1.convertToJsPrimitive(deserialized, dynamoDatatype, nextClassObject);
+                const injectedClass = this.deformation(dynamo, nextClassObject, deserializerArg);
                 const objectField = {
-                    [objectPropertyName]: jsPrimitive
+                    [objectPropertyName]: injectedClass
                 };
                 Object.assign(holder, objectField);
             }

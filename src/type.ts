@@ -15,7 +15,7 @@ export enum Datatype {
     L = "L", // An attribute of type List. For example:  "L": [ {"S": "Cookies"} , {"S": "Coffee"}, {"N", "3.14159"}]
     NULL = "NULL", // An attribute of type Null. For example:  "NULL": true
     BOOL = "BOOL", // An attribute of type Boolean. For example:  "BOOL": true
-    NESTED = "NESTED" // for nested class.
+    INJECT = "INJECT" // for data injection.
 }
 
 // Key type of item field
@@ -43,6 +43,7 @@ export interface SerializerArg<TSource> {
 
 // The argument of the Deserializer function.
 export interface DeserializerArg {
+    object: any;
     dynamo: Item;
     dynamoDatatype: Datatype;
     dynamoPropertyName: string;

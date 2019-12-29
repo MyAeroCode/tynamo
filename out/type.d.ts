@@ -12,7 +12,7 @@ export declare enum Datatype {
     L = "L",
     NULL = "NULL",
     BOOL = "BOOL",
-    NESTED = "NESTED"
+    INJECT = "INJECT"
 }
 export declare enum Fieldtype {
     hash = "HASH",
@@ -29,6 +29,7 @@ export interface SerializerArg<TSource> {
     sourcePropertyName: string;
 }
 export interface DeserializerArg {
+    object: any;
     dynamo: Item;
     dynamoDatatype: Datatype;
     dynamoPropertyName: string;

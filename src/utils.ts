@@ -10,6 +10,7 @@ import {
 } from "./type";
 import dynamoFormation from "./dynamo-formation";
 import metadata from "./metadata";
+import { DynamoFormation } from ".";
 
 // Get DynamoDataType of primitive type.
 // Operate only for String, Number, and Boolean.
@@ -32,9 +33,13 @@ export const defaultSerializer: Serializer<any> = (arg: SerializerArg<any>) => {
 // Using the value of the described.
 //
 export const defaultDeserializer: Deserializer<any> = (arg: DeserializerArg): any => {
-    return arg.dynamoDatatype == Datatype.NESTED
-        ? arg.dynamo[arg.dynamoPropertyName]
-        : arg.dynamo[arg.dynamoPropertyName][arg.dynamoDatatype];
+    if (arg.dynamoDatatype == Datatype.INJECT) {
+        const type = Reflect.getMetadata("design:type", new arg.object(), arg.sourcePropertyName);
+        const innerData = DynamoFormation.deformation(arg.dynamo, type);
+        return innerData;
+    } else {
+        return arg.dynamo[arg.dynamoPropertyName][arg.dynamoDatatype];
+    }
 };
 
 // Convert JsPrimitive to DynamoPrimitive.
@@ -73,7 +78,7 @@ export function convertToDynamoPrimitive(jsPrimitive: any, datatype: Datatype): 
             const list = (jsPrimitive as any[]).map((elem) => dynamoFormation.formation(elem));
             return list;
 
-        case Datatype.NESTED:
+        case Datatype.INJECT:
             const nestedFormation = dynamoFormation.formation(jsPrimitive);
             return nestedFormation;
 
@@ -85,7 +90,7 @@ export function convertToDynamoPrimitive(jsPrimitive: any, datatype: Datatype): 
 // Convert DynamoPrimitive to JsPrimitive.
 // Operates after deserialization is performed.
 //
-export function convertToJsPrimitive(dynamoPrimitive: any, datatypeId: Datatype, classObject: any): any {
+export function convertToJsPrimitive(dynamoPrimitive: any, datatypeId: Datatype): any {
     switch (datatypeId) {
         case Datatype.S:
         case Datatype.B: // it must be string.
@@ -123,10 +128,6 @@ export function convertToJsPrimitive(dynamoPrimitive: any, datatypeId: Datatype,
                 const nestedDeformation = dynamoFormation.deformation(elem, alike);
                 return nestedDeformation;
             });
-
-        case Datatype.NESTED:
-            const nestedDeformation = dynamoFormation.deformation(dynamoPrimitive, classObject);
-            return nestedDeformation;
 
         default:
             throw new Error();

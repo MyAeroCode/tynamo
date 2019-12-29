@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const type_1 = require("./type");
 const dynamo_formation_1 = __importDefault(require("./dynamo-formation"));
 const metadata_1 = __importDefault(require("./metadata"));
+const _1 = require(".");
 // Get DynamoDataType of primitive type.
 // Operate only for String, Number, and Boolean.
 //
@@ -28,9 +29,14 @@ exports.defaultSerializer = (arg) => {
 // Using the value of the described.
 //
 exports.defaultDeserializer = (arg) => {
-    return arg.dynamoDatatype == type_1.Datatype.NESTED
-        ? arg.dynamo[arg.dynamoPropertyName]
-        : arg.dynamo[arg.dynamoPropertyName][arg.dynamoDatatype];
+    if (arg.dynamoDatatype == type_1.Datatype.INJECT) {
+        const type = Reflect.getMetadata("design:type", new arg.object(), arg.sourcePropertyName);
+        const innerData = _1.DynamoFormation.deformation(arg.dynamo, type);
+        return innerData;
+    }
+    else {
+        return arg.dynamo[arg.dynamoPropertyName][arg.dynamoDatatype];
+    }
 };
 // Convert JsPrimitive to DynamoPrimitive.
 // Operates after serialization is performed.
@@ -62,7 +68,7 @@ function convertToDynamoPrimitive(jsPrimitive, datatype) {
         case type_1.Datatype.L:
             const list = jsPrimitive.map((elem) => dynamo_formation_1.default.formation(elem));
             return list;
-        case type_1.Datatype.NESTED:
+        case type_1.Datatype.INJECT:
             const nestedFormation = dynamo_formation_1.default.formation(jsPrimitive);
             return nestedFormation;
         default:
@@ -73,7 +79,7 @@ exports.convertToDynamoPrimitive = convertToDynamoPrimitive;
 // Convert DynamoPrimitive to JsPrimitive.
 // Operates after deserialization is performed.
 //
-function convertToJsPrimitive(dynamoPrimitive, datatypeId, classObject) {
+function convertToJsPrimitive(dynamoPrimitive, datatypeId) {
     switch (datatypeId) {
         case type_1.Datatype.S:
         case type_1.Datatype.B: // it must be string.
@@ -105,9 +111,6 @@ function convertToJsPrimitive(dynamoPrimitive, datatypeId, classObject) {
                 const nestedDeformation = dynamo_formation_1.default.deformation(elem, alike);
                 return nestedDeformation;
             });
-        case type_1.Datatype.NESTED:
-            const nestedDeformation = dynamo_formation_1.default.deformation(dynamoPrimitive, classObject);
-            return nestedDeformation;
         default:
             throw new Error();
     }

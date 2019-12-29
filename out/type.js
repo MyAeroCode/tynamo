@@ -13,7 +13,7 @@ var Datatype;
     Datatype["L"] = "L";
     Datatype["NULL"] = "NULL";
     Datatype["BOOL"] = "BOOL";
-    Datatype["NESTED"] = "NESTED"; // for nested class.
+    Datatype["INJECT"] = "INJECT"; // for data injection.
 })(Datatype = exports.Datatype || (exports.Datatype = {}));
 // Key type of item field
 var Fieldtype;
