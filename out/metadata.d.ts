@@ -1,9 +1,12 @@
-import { FieldDescriptor, Maybe, TableDescriptor } from "./type";
+import { FieldDescriptor, TableDescriptor, Item } from "./type";
 declare class Metadata {
     private global;
+    private classObjectCache;
     private checkConflict;
     add<TObject>(fieldDescriptor: FieldDescriptor<TObject>): void;
-    getOf(object: Object): Maybe<TableDescriptor<any>>;
+    getOf<TObject>(object: Object): TableDescriptor<TObject>;
+    searchClassObjectLike(item: Item): any;
+    private getAllFieldsOf;
 }
 declare const metadata: Metadata;
 export default metadata;

@@ -10,15 +10,24 @@ const metadata_1 = __importDefault(require("./metadata"));
 //
 function DynamoField(dynamoFieldType, args) {
     return function createDynamoFieldDecorator(target, objectPropertyName) {
-        var _a, _b, _c, _d;
-        let descriptor = {
+        if (!args)
+            args = {};
+        if (!args.datatype)
+            args.datatype = utils_1.defaultDatatype;
+        if (!args.serializer)
+            args.serializer = utils_1.defaultSerialize;
+        if (!args.deserializer)
+            args.deserializer = utils_1.defaultDeserialize;
+        if (!args.propertyName)
+            args.propertyName = objectPropertyName.toString();
+        const descriptor = {
             class: target,
-            dynamoFieldtype: dynamoFieldType,
-            dynamoDatatypeName: ((_a = args) === null || _a === void 0 ? void 0 : _a.dynamoDatatypeName) ? args.dynamoDatatypeName : utils_1.defaultDatatype,
-            serializer: ((_b = args) === null || _b === void 0 ? void 0 : _b.serialize) ? args.serialize : utils_1.defaultSerialize,
-            deserializer: ((_c = args) === null || _c === void 0 ? void 0 : _c.deserialize) ? args.deserialize : utils_1.defaultDeserialize,
-            objectPropertyName: objectPropertyName.toString(),
-            dynamoPropertyName: ((_d = args) === null || _d === void 0 ? void 0 : _d.dynamoPropertyName) ? args.dynamoPropertyName : objectPropertyName.toString()
+            fieldtype: dynamoFieldType,
+            datatype: args.datatype,
+            serializer: args.serializer,
+            deserializer: args.deserializer,
+            dynamoPropertyName: args.propertyName,
+            objectPropertyName: objectPropertyName.toString()
         };
         metadata_1.default.add(descriptor);
     };

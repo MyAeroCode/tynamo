@@ -1,7 +1,7 @@
-import { FormationType, Item } from "./type";
+import { FormationMask, Item } from "./type";
 declare class DynamoFormation {
-    formation<TObject>(object: TObject, formationType?: FormationType): Item;
-    deformation<TObject>(dynamo: Item, classObject: any): TObject;
+    formation<TObject>(object: TObject, formationType?: FormationMask): Item;
+    deformation<TObject>(dynamo: Item, classObject?: any): TObject;
 }
 declare const dynamoFormation: DynamoFormation;
 export default dynamoFormation;

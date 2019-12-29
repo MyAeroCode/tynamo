@@ -11,50 +11,80 @@ const utils_1 = require("./utils");
 class DynamoFormation {
     // Converts to DynamoItem.
     //
-    formation(object, formationType = type_1.FormationType.Full) {
+    formation(object, formationType = type_1.FormationMask.Full) {
+        // Primitive check.
+        const classType = object.constructor;
+        if (classType === String) {
+            return {
+                S: object
+            };
+        }
+        if (classType === Number) {
+            return {
+                N: object.toString()
+            };
+        }
+        if (classType === Boolean) {
+            return {
+                BOOL: object
+            };
+        }
         // Validation check.
         // Is it registered in the metadata?
         const table = metadata_1.default.getOf(object);
-        if (!table)
-            throw new Error(`Unregistered entity [${object.constructor.name}]`);
         // Gets all field descriptor to create the DynamoItem.
         // Then serialize and merge all fields.
         const fields = [];
-        if (formationType & type_1.FormationType.HashKey && table.hash)
+        if (formationType & type_1.FormationMask.HashKey && table.hash)
             fields.push(table.hash);
-        if (formationType & type_1.FormationType.RangeKey && table.range)
+        if (formationType & type_1.FormationMask.RangeKey && table.range)
             fields.push(table.range);
-        if (formationType & type_1.FormationType.Body)
+        if (formationType & type_1.FormationMask.Body)
             fields.push(...table.attrs.values());
         const dynamoItem = {};
         for (const target of fields) {
             // fetch from chunk or value.
-            let dynamoDatatypeName = utils_1.fetchFromChunkOrValue(target.dynamoDatatypeName, undefined);
-            let dynamoPropertyName = utils_1.fetchFromChunkOrValue(target.dynamoPropertyName, undefined);
-            let objectPropertyName = utils_1.fetchFromChunkOrValue(target.objectPropertyName, undefined);
-            let serialized = utils_1.fetchFromChunkOrValue(target.serializer, {
-                object: object,
-                objectPropertyName: objectPropertyName
-            });
-            // merge.
-            let item = {
-                [dynamoPropertyName]: {
-                    [dynamoDatatypeName]: serialized
-                }
+            const dynamoPropertyName = utils_1.fetchFromChunkOrValue(target.dynamoPropertyName, undefined);
+            const objectPropertyName = utils_1.fetchFromChunkOrValue(target.objectPropertyName, undefined);
+            const datatypeArg = {
+                source: object,
+                sourcePropertyName: objectPropertyName
             };
-            Object.assign(dynamoItem, item);
+            const dynamoDatatype = utils_1.fetchFromChunkOrValue(target.datatype, datatypeArg);
+            const serializerArg = {
+                source: object,
+                sourcePropertyName: objectPropertyName
+            };
+            const serialized = utils_1.fetchFromChunkOrValue(target.serializer, serializerArg);
+            const dynamoPrimitive = utils_1.convertToDynamoPrimitive(serialized, dynamoDatatype);
+            // merge.
+            const dynamoField = dynamoDatatype == type_1.Datatype.NESTED
+                ? {
+                    [dynamoPropertyName]: dynamoPrimitive
+                }
+                : {
+                    [dynamoPropertyName]: {
+                        [dynamoDatatype]: dynamoPrimitive
+                    }
+                };
+            Object.assign(dynamoItem, dynamoField);
         }
         return dynamoItem;
     }
     // Convert to object.
     //
     deformation(dynamo, classObject) {
+        // Primitive check.
+        if (dynamo.N)
+            return Number.parseFloat(dynamo.N); // it must number.
+        if (dynamo.S)
+            return dynamo.S; // it must string.
+        if (dynamo.BOOL)
+            return dynamo.BOOL; // it must boolean.
         // Validation check.
         // Is it registered in the metadata?
-        let holder = new classObject();
+        const holder = new classObject();
         const table = metadata_1.default.getOf(holder);
-        if (table == undefined)
-            throw new Error(`Unregistered entity [${holder.constructor.name}]`);
         // Gets all field descriptor to create the Object.
         // Then deserialize and merge all fields.
         const targets = [];
@@ -66,17 +96,27 @@ class DynamoFormation {
             targets.push(...table.attrs.values());
         for (const target of targets) {
             // fetch from chunk or value.
-            let dynamoPropertyName = utils_1.fetchFromChunkOrValue(target.dynamoPropertyName, undefined);
-            let dynamoDatatypeName = utils_1.fetchFromChunkOrValue(target.dynamoDatatypeName, undefined);
-            let objectPropertyName = utils_1.fetchFromChunkOrValue(target.objectPropertyName, undefined);
-            let deserialized = utils_1.fetchFromChunkOrValue(target.deserializer, {
+            const dynamoPropertyName = utils_1.fetchFromChunkOrValue(target.dynamoPropertyName, undefined);
+            const objectPropertyName = utils_1.fetchFromChunkOrValue(target.objectPropertyName, undefined);
+            const datatypeArg = {
+                source: holder,
+                sourcePropertyName: objectPropertyName
+            };
+            const dynamoDatatype = utils_1.fetchFromChunkOrValue(target.datatype, datatypeArg);
+            const deserializerArg = {
                 dynamo: dynamo,
+                dynamoDatatype: dynamoDatatype,
                 dynamoPropertyName: dynamoPropertyName,
-                dynamoDatatypeName: dynamoDatatypeName,
-                objectPropertyName: objectPropertyName
-            });
+                sourcePropertyName: objectPropertyName
+            };
+            const deserialized = utils_1.fetchFromChunkOrValue(target.deserializer, deserializerArg);
+            const nextClassObject = Reflect.getMetadata("design:type", holder, objectPropertyName);
+            const jsPrimitive = utils_1.convertToJsPrimitive(deserialized, dynamoDatatype, nextClassObject);
             // merge.
-            Object.assign(holder, deserialized);
+            const objectField = {
+                [objectPropertyName]: jsPrimitive
+            };
+            Object.assign(holder, objectField);
         }
         return holder;
     }
