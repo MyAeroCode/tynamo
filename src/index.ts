@@ -11,7 +11,9 @@ import {
     FormationMask,
     SerializerArg,
     DeserializerArg,
-    FieldDescriptor
+    FieldDescriptor,
+    Serializer,
+    Deserializer
 } from "./type";
 export {
     DynamoField,
@@ -22,6 +24,8 @@ export {
     Fieldtype,
     Item,
     FormationMask,
+    Serializer,
+    Deserializer,
     SerializerArg,
     DeserializerArg,
     FieldDecoratorArgs,
