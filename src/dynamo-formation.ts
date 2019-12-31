@@ -1,153 +1,161 @@
-import {
-    FormationMask,
-    Item,
-    FieldDescriptor,
-    Datatype,
-    TableDescriptor,
-    DatatypeArg,
-    SerializerArg,
-    DeserializerArg
-} from "./type";
-import Metadata from "./metadata";
-import { fetchFromChunkOrValue, convertToDynamoPrimitive, convertToJsPrimitive, defaultSerializer } from "./utils";
+import { FormationMask, Item, PropertyDescriptor, DataType, EntityDescriptor } from "./type";
+import MetaData from "./metadata";
+import { fetchFromChunkOrValue } from "./utils";
 
 // Performs the interconversion between DynamoItem and the object.
 //
 class DynamoFormation {
-    // Converts to DynamoItem.
+    // Convert sourceScalar to dynamoScalar.
     //
-    formation<TObject>(object: TObject, formationType: FormationMask = FormationMask.Full): Item {
-        // Primitive check.
-        const classType = (object as Object).constructor;
-        if (classType === String) {
-            return {
-                S: object
-            };
-        }
-        if (classType === Number) {
-            return {
-                N: (object as any).toString()
-            };
-        }
-        if (classType === Boolean) {
-            return {
-                BOOL: object
-            };
-        }
-
-        // Validation check.
-        // Is it registered in the metadata?
-        const table: TableDescriptor<TObject> = Metadata.getOf(object);
-
-        // Gets all field descriptor to create the DynamoItem.
-        // Then serialize and merge all fields.
-        const fields: FieldDescriptor<TObject>[] = [];
-        if (formationType & FormationMask.HashKey && table.hash) fields.push(table.hash);
-        if (formationType & FormationMask.RangeKey && table.range) fields.push(table.range);
-        if (formationType & FormationMask.Body) fields.push(...table.attrs!!.values());
-
-        const dynamoItem: Item = {};
-        for (const target of fields) {
-            // fetch from chunk or value.
-            const dynamoPropertyName = target.dynamoPropertyName;
-            const objectPropertyName = target.objectPropertyName;
-            const datatypeArg: DatatypeArg<TObject> = {
-                source: object,
-                sourcePropertyName: objectPropertyName
-            };
-            const dynamoDatatype = fetchFromChunkOrValue<Datatype>(target.datatype, datatypeArg);
-            const serializerArg: SerializerArg<TObject> = {
-                source: object,
-                sourcePropertyName: objectPropertyName
-            };
-            const serialized = fetchFromChunkOrValue<any>(target.serializer, serializerArg);
-            const dynamoPrimitive = convertToDynamoPrimitive(serialized, dynamoDatatype);
-
-            // merge.
-            const dynamoField: Item =
-                dynamoDatatype == Datatype.INJECT
-                    ? dynamoPrimitive
-                    : {
-                          [dynamoPropertyName]: {
-                              [dynamoDatatype]: dynamoPrimitive
-                          }
-                      };
-
-            let realPropertyName: string = "";
-            for (const key in dynamoField) {
-                realPropertyName = key;
-            }
-            if (dynamoItem[realPropertyName] != undefined) {
-                throw new Error(
-                    `Duplicate name while doing INJECT. [${(object as any).constructor.name}.${realPropertyName}]`
-                );
-            }
-            Object.assign(dynamoItem, dynamoField);
-        }
-        return dynamoItem;
+    formationScalar(value: number | string | boolean): string | boolean {
+        if (value === undefined || value === null || value === "") throw new Error(`'${value}' is not allowed.`);
+        if (value.constructor === Number) return (value as number).toString();
+        if (value.constructor === String) return value as string;
+        if (value.constructor === Boolean) return value as boolean;
+        throw new Error(`Please specify dataType of non-scalar data.`);
     }
 
-    // Convert to object.
+    // Convert sourceProperty to dynamoProperty.
     //
-    deformation<TObject>(dynamo: Item, classObject: any, context?: DeserializerArg): TObject {
-        // Primitive check.
-        if (context && context.dynamoDatatype != Datatype.INJECT) {
-            const value = dynamo[context.dynamoPropertyName][context.dynamoDatatype];
-            return convertToJsPrimitive(value, context.dynamoDatatype);
+    formationProperty(parent: any, propertyDescriptor: PropertyDescriptor<any>): Item {
+        const dynamoPropertyName: string = propertyDescriptor.dynamoPropertyName;
+        let realDataType: DataType = propertyDescriptor.dataType;
+
+        // custom property serializer check.
+        const source = fetchFromChunkOrValue<any>(propertyDescriptor.serializer, {
+            source: parent,
+            propertyDescriptor: propertyDescriptor
+        });
+
+        // null check.
+        if (source === undefined || source === null) {
+            if (propertyDescriptor.nullable) realDataType = DataType.NULL;
+            else throw new Error(`Non-nullable property sholud not NULL or undefined`);
         }
-        if (dynamo.S) return convertToJsPrimitive(dynamo.S, Datatype.S);
-        if (dynamo.N) return convertToJsPrimitive(dynamo.N, Datatype.N);
-        if (dynamo.B) return convertToJsPrimitive(dynamo.B, Datatype.B);
-        if (dynamo.SS) return convertToJsPrimitive(dynamo.SS, Datatype.SS);
-        if (dynamo.NS) return convertToJsPrimitive(dynamo.NS, Datatype.NS);
-        if (dynamo.BS) return convertToJsPrimitive(dynamo.BS, Datatype.BS);
-        if (dynamo.M) return convertToJsPrimitive(dynamo.M, Datatype.M);
-        if (dynamo.L) return convertToJsPrimitive(dynamo.L, Datatype.L);
-        if (dynamo.NULL) return convertToJsPrimitive(dynamo.NULL, Datatype.NULL);
-        if (dynamo.BOOL) return convertToJsPrimitive(dynamo.BOOL, Datatype.BOOL);
+
+        // scalar check.
+        if (realDataType === DataType.__SCALAR__) {
+            if (source.constructor === Number) realDataType = propertyDescriptor.dataType = DataType.N;
+            else if (source.constructor === String) realDataType = propertyDescriptor.dataType = DataType.S;
+            else if (source.constructor === Boolean) realDataType = propertyDescriptor.dataType = DataType.BOOL;
+            else throw new Error();
+        }
+
+        function resolve(value: any): Item {
+            return {
+                [dynamoPropertyName]: {
+                    [realDataType]: value
+                }
+            };
+        }
+        switch (realDataType) {
+            case DataType.S:
+            case DataType.N:
+            case DataType.B:
+            case DataType.BOOL:
+                return resolve(this.formationScalar(source));
+
+            case DataType.SS:
+            case DataType.NS:
+            case DataType.BS:
+                return resolve((source as any[]).map((v) => this.formationScalar(v)));
+
+            case DataType.L:
+                return resolve(
+                    (source as any[]).map((v) => {
+                        try {
+                            return this.formation(v);
+                        } catch (e) {
+                            throw new Error(`DataType.L should not contain scalar values.`);
+                        }
+                    })
+                );
+
+            case DataType.M:
+                return resolve(this.formation(source));
+
+            case DataType.NULL:
+                return resolve(true);
+
+            default:
+                throw new Error(`Can not detect DataType.`);
+        }
+    }
+
+    // Convert sourceObject to dynamoItem.
+    //
+    formation<TSource>(source: TSource | undefined, formationType: FormationMask = FormationMask.Full): Item {
+        if (source === undefined || source === null) {
+            throw new Error(`Empty object is not allowd.`);
+        }
+
+        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getOf(source);
+        const propertyDescriptors: PropertyDescriptor<TSource>[] = [];
+        const HASH = entityDescriptor.hash;
+        const RANGE = entityDescriptor.range;
+        const ATTRS = entityDescriptor.attrs;
+
+        if (formationType & FormationMask.HashKey && HASH) propertyDescriptors.push(HASH);
+        if (formationType & FormationMask.RangeKey && RANGE) propertyDescriptors.push(RANGE);
+        if (formationType & FormationMask.Body) propertyDescriptors.push(...ATTRS!!.values());
+
+        const dynamo: Item = {};
+        for (const propertyDescriptor of propertyDescriptors) {
+            const dynamoProperty = this.formationProperty(source, propertyDescriptor);
+            Object.assign(dynamo, dynamoProperty);
+        }
+        return dynamo;
+    }
+
+    // Convert dynamoProperty to sourceProperty.
+    //
+    deformationProperty(parent: Item, propertyDescriptor: PropertyDescriptor<any>): any {
+        const sourcePropertyName = propertyDescriptor.sourcePropertyName;
+        function resolve(data: any): any {
+            return {
+                [sourcePropertyName]: data
+            };
+        }
+
+        // deserializer
+        const property = fetchFromChunkOrValue<any>(propertyDescriptor.deserializer, {
+            dynamo: parent,
+            propertyDescriptor
+        });
+
+        if (property.S) return resolve(String(property.S));
+        if (property.N) return resolve(Number(property.N));
+        if (property.B) return resolve(String(property.B));
+        if (property.SS) return resolve(property.SS as string[]);
+        if (property.NS) return resolve((property.NS as string[]).map((nstr) => Number(nstr)));
+        if (property.BS) return resolve(property.BS as string[]);
+        if (property.L) return resolve((property.L as any[]).map((val) => this.deformation(val)));
+        if (property.M) return resolve(this.deformation(property.M));
+        if (property.BOOL) return resolve(property.BOOL as boolean);
+        if (property.NULL) return resolve(undefined);
+        return property;
+    }
+
+    // Convert dynamoItem to sourceObject.
+    //
+    deformation(dynamo: Item): any {
+        const TClass = MetaData.getTClassOf(dynamo);
 
         // Validation check.
         // Is it registered in the metadata?
-        const holder = new classObject();
-        const table: TableDescriptor<TObject> = Metadata.getOf(holder);
+        const holder = new TClass();
+        const entityDescriptor: EntityDescriptor<any> = MetaData.getOf(holder);
 
         // Gets all field descriptor to create the Object.
         // Then deserialize and merge all fields.
-        const targets: FieldDescriptor<TObject>[] = [];
-        if (table.hash) targets.push(table.hash);
-        if (table.range) targets.push(table.range);
-        if (table.attrs) targets.push(...table.attrs.values());
+        const propertyDescriptors: PropertyDescriptor<any>[] = [];
+        if (entityDescriptor.hash) propertyDescriptors.push(entityDescriptor.hash);
+        if (entityDescriptor.range) propertyDescriptors.push(entityDescriptor.range);
+        if (entityDescriptor.attrs) propertyDescriptors.push(...entityDescriptor.attrs.values());
 
-        for (const target of targets) {
-            // fetch from chunk or value.
-            const dynamoPropertyName = target.dynamoPropertyName;
-            const objectPropertyName = target.objectPropertyName;
-            const datatypeArg: DatatypeArg<TObject> = {
-                source: holder,
-                sourcePropertyName: objectPropertyName
-            };
-            const dynamoDatatype = fetchFromChunkOrValue<Datatype>(target.datatype, datatypeArg);
-            const deserializerArg: DeserializerArg = {
-                object: classObject,
-                dynamo: dynamo,
-                dynamoDatatype: dynamoDatatype,
-                dynamoPropertyName: dynamoPropertyName,
-                sourcePropertyName: objectPropertyName
-            };
-            const nextClassObject = Reflect.getMetadata("design:type", holder, objectPropertyName);
-
-            // merge.
-            if (target.serializer !== defaultSerializer) {
-                const deserialized = fetchFromChunkOrValue<any>(target.deserializer, deserializerArg);
-
-                Object.assign(holder, deserialized);
-            } else {
-                const injectedClass = this.deformation(dynamo, nextClassObject, deserializerArg);
-                const objectField: object = {
-                    [objectPropertyName]: injectedClass
-                };
-                Object.assign(holder, objectField);
-            }
+        for (const propertyDescriptor of propertyDescriptors) {
+            const sourceProperty = this.deformationProperty(dynamo, propertyDescriptor);
+            Object.assign(holder, sourceProperty);
         }
         return holder;
     }

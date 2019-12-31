@@ -1,27 +1,54 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// The data-type used in DynamoDB.
-var Datatype;
-(function (Datatype) {
-    Datatype["S"] = "S";
-    Datatype["N"] = "N";
-    Datatype["B"] = "B";
-    Datatype["SS"] = "SS";
-    Datatype["NS"] = "NS";
-    Datatype["BS"] = "BS";
-    Datatype["M"] = "M";
-    Datatype["L"] = "L";
-    Datatype["NULL"] = "NULL";
-    Datatype["BOOL"] = "BOOL";
-    Datatype["INJECT"] = "INJECT"; // for data injection.
-})(Datatype = exports.Datatype || (exports.Datatype = {}));
-// Key type of item field
-var Fieldtype;
-(function (Fieldtype) {
-    Fieldtype["hash"] = "HASH";
-    Fieldtype["range"] = "RANGE";
-    Fieldtype["attr"] = "ATTR";
-})(Fieldtype = exports.Fieldtype || (exports.Fieldtype = {}));
+// The DataType used in DynamoDB.
+var DataType;
+(function (DataType) {
+    DataType["S"] = "S";
+    DataType["N"] = "N";
+    DataType["B"] = "B";
+    DataType["SS"] = "SS";
+    DataType["NS"] = "NS";
+    DataType["BS"] = "BS";
+    DataType["M"] = "M";
+    DataType["L"] = "L";
+    DataType["NULL"] = "NULL";
+    DataType["BOOL"] = "BOOL";
+    DataType["__SCALAR__"] = "__SCALAR__"; // Default, maybe S|N|B.
+})(DataType = exports.DataType || (exports.DataType = {}));
+// Property Type of DynamoDB.
+// Specially, HASH and RANGE are KeyType.
+var PropertyType;
+(function (PropertyType) {
+    PropertyType["hash"] = "HASH";
+    PropertyType["range"] = "RANGE";
+    PropertyType["attr"] = "ATTR";
+})(PropertyType = exports.PropertyType || (exports.PropertyType = {}));
+// The argument of the DataType Resolver.
+class DataTypeResolverArg {
+}
+exports.DataTypeResolverArg = DataTypeResolverArg;
+// The argument of the Serializer function.
+class SerializerArg {
+}
+exports.SerializerArg = SerializerArg;
+// The argument of the Deserializer function.
+class DeserializerArg {
+}
+exports.DeserializerArg = DeserializerArg;
+// Parameters to create the PropertyDescriptor.
+// Used in the DynamoItemField Decorator.
+class PropertyDecoratorArgs {
+}
+exports.PropertyDecoratorArgs = PropertyDecoratorArgs;
+// Describe how one property in DynamoItem is created.
+// It also contain how to return to the original property from the DynamoItem property.
+class PropertyDescriptor {
+}
+exports.PropertyDescriptor = PropertyDescriptor;
+// Describe how one entity of DynamoDB is created.
+class EntityDescriptor {
+}
+exports.EntityDescriptor = EntityDescriptor;
 var FormationMask;
 (function (FormationMask) {
     FormationMask[FormationMask["HashKey"] = 1] = "HashKey";

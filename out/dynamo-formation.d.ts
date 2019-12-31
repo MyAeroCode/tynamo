@@ -1,7 +1,10 @@
-import { FormationMask, Item, DeserializerArg } from "./type";
+import { FormationMask, Item, PropertyDescriptor } from "./type";
 declare class DynamoFormation {
-    formation<TObject>(object: TObject, formationType?: FormationMask): Item;
-    deformation<TObject>(dynamo: Item, classObject: any, context?: DeserializerArg): TObject;
+    formationScalar(value: number | string | boolean): string | boolean;
+    formationProperty(parent: any, propertyDescriptor: PropertyDescriptor<any>): Item;
+    formation<TSource>(source: TSource | undefined, formationType?: FormationMask): Item;
+    deformationProperty(parent: Item, propertyDescriptor: PropertyDescriptor<any>): any;
+    deformation(dynamo: Item): any;
 }
 declare const dynamoFormation: DynamoFormation;
 export default dynamoFormation;

@@ -1,27 +1,33 @@
-import { FieldDecoratorArgs, FieldDescriptor, Fieldtype } from "./type";
-import { defaultSerializer, defaultDeserializer, defaultDatatype } from "./utils";
-import dynamoMapper from "./metadata";
+import { PropertyDecoratorArgs, PropertyDescriptor, PropertyType, DataType } from "./type";
+import { defaultSerializer, defaultDeserializer } from "./utils";
+import MetaData from "./metadata";
+
+export function DynamoEntity(TClass: any) {
+    MetaData.registEntity(TClass);
+}
 
 // Class Member Decorator:
-//      Add this field to DynamoItem.
+//      Add this property to DynamoItem.
 //
-export function DynamoField<TObject>(dynamoFieldType: Fieldtype, args?: FieldDecoratorArgs<TObject>) {
-    return function createDynamoFieldDecorator(target: Object, objectPropertyName: string | symbol): void {
+export function DynamoProperty<TObject>(propertyType: PropertyType, args?: PropertyDecoratorArgs<TObject>) {
+    return function createDynamoPropertyDecorator(TClassObject: Object, sourcePropertyName: string | symbol): void {
         if (!args) args = {};
-        if (!args.datatype) args.datatype = defaultDatatype;
+        if (!args.dataType) args.dataType = DataType.__SCALAR__;
+        if (!args.nullable) args.nullable = false;
         if (!args.serializer) args.serializer = defaultSerializer;
         if (!args.deserializer) args.deserializer = defaultDeserializer;
-        if (!args.propertyName) args.propertyName = objectPropertyName.toString();
+        if (!args.propertyName) args.propertyName = sourcePropertyName.toString();
 
-        const descriptor: FieldDescriptor<TObject> = {
-            class: target,
-            fieldtype: dynamoFieldType,
-            datatype: args.datatype,
+        const descriptor: PropertyDescriptor<TObject> = {
+            TClassName: TClassObject.constructor.name,
+            dynamoPropertyType: propertyType,
+            dataType: args.dataType,
+            nullable: args.nullable,
             serializer: args.serializer,
             deserializer: args.deserializer,
             dynamoPropertyName: args.propertyName,
-            objectPropertyName: objectPropertyName.toString()
+            sourcePropertyName: sourcePropertyName.toString()
         };
-        dynamoMapper.add(descriptor);
+        MetaData.registPropertyDescriptor(descriptor);
     };
 }

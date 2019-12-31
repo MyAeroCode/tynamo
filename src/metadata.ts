@@ -1,170 +1,174 @@
-import { FieldDescriptor, GlobalDescriptor, TableDescriptor, Fieldtype, Item } from "./type";
+import { PropertyDescriptor, EntityDescriptor, PropertyType, Item } from "./type";
 import { fetchFromChunkOrValue } from "./utils";
+import { DataType } from ".";
 
-class Metadata {
-    private global: GlobalDescriptor = {};
-    private classObjectCache = new Map<string, any>();
+class MetaData {
+    private meta = new Map<string, EntityDescriptor<any>>();
 
-    // Examine for conflicting fields.
-    // This is the case when the type overlaps, or the name overlaps.
+    // Examine for conflicting property.
+    // Test if the duplicate keyType or propertyName.
     //
-    private checkConflict<TObject>(fieldDescriptor: FieldDescriptor<TObject>) {
+    private propertyConflictTest<TSource>(propertyDescriptor: PropertyDescriptor<TSource>) {
         // Validation check.
-        // Is it registered in the metadata?
-        const classKey: string = fieldDescriptor.class.constructor.toString();
-        const table: TableDescriptor<any> | undefined = this.global[classKey];
-        if (table == undefined) throw new Error(`Unregistered entity [${fieldDescriptor.class.constructor.name}]`);
-
-        //  Examine if:
-        //      1. Duplicate name of field.
-        //      2. Duplicate type of field
-        const thisFieldName: string = fetchFromChunkOrValue<string>(fieldDescriptor.dynamoPropertyName, null);
-        const thisFieldtype: Fieldtype = fetchFromChunkOrValue<Fieldtype>(fieldDescriptor.fieldtype, null);
-        const attrs = table.attrs;
-
-        if (table.hash?.dynamoPropertyName) {
-            const hashFieldName: string = fetchFromChunkOrValue<string>(table?.hash?.dynamoPropertyName!!, null);
-            if (thisFieldtype == Fieldtype.hash && hashFieldName) {
-                throw new Error(`Duplicate hashKey, [${hashFieldName}] and [${thisFieldName}]`);
-            }
-            if (hashFieldName == thisFieldName) {
-                throw new Error(`Duplicate attrName, [${thisFieldName}]`);
-            }
+        // Is it registered entity in the metadata?
+        const entityDescriptor: EntityDescriptor<any> | undefined = this.meta.get(propertyDescriptor.TClassName);
+        if (entityDescriptor == undefined) {
+            throw new Error(`Unregistered class [${propertyDescriptor.TClassName}]`);
         }
 
-        if (table.range?.dynamoPropertyName) {
-            const rangeFieldName: string = fetchFromChunkOrValue<string>(table?.range?.dynamoPropertyName!!, null);
-            if (thisFieldtype == Fieldtype.range && rangeFieldName) {
-                throw new Error(`Duplicate rangeKey, [${rangeFieldName}] and [${thisFieldName}]`);
-            }
-            if (rangeFieldName == thisFieldName) {
-                throw new Error(`Duplicate attrName, [${thisFieldName}]`);
-            }
+        // Validation check.
+        // KeyType is must non-nullable.
+        if (
+            (propertyDescriptor.dynamoPropertyType == PropertyType.hash ||
+                propertyDescriptor.dynamoPropertyType == PropertyType.range) &&
+            propertyDescriptor.nullable
+        ) {
+            throw new Error(
+                `KeyType is must non-nullable. -> [${propertyDescriptor.TClassName}.${propertyDescriptor.sourcePropertyName}]`
+            );
         }
 
-        if (attrs?.has(thisFieldName)) {
-            throw new Error(`Duplicate attrName, [${thisFieldName}]`);
+        // Simplify variable name.
+        const thisPropertyName: string = propertyDescriptor.dynamoPropertyName;
+        const thisPropertyType: PropertyType = propertyDescriptor.dynamoPropertyType;
+        const HASH: PropertyDescriptor<TSource> | undefined = entityDescriptor.hash;
+        const RANGE: PropertyDescriptor<TSource> | undefined = entityDescriptor.range;
+        const ATTRS: Map<string, PropertyDescriptor<TSource>> | undefined = entityDescriptor.attrs;
+
+        // Test for KeyType.
+        if ((thisPropertyType === PropertyType.hash && HASH) || (thisPropertyType === PropertyType.range && RANGE)) {
+            throw new Error(`Duplicate ${thisPropertyType} Key of [${propertyDescriptor.TClassName}].`);
+        }
+
+        // Test for DynamoPropertyName.
+        const dynamoPropertyNameSet: Set<string> = new Set<string>();
+        if (HASH) dynamoPropertyNameSet.add(HASH.dynamoPropertyName);
+        if (RANGE) dynamoPropertyNameSet.add(RANGE.dynamoPropertyName);
+        ATTRS?.forEach((attr) => dynamoPropertyNameSet.add(attr.dynamoPropertyName));
+        if (dynamoPropertyNameSet.has(thisPropertyName)) {
+            throw new Error(`Duplicate DynamoPropertyName of ${thisPropertyType}. -> ${thisPropertyName}`);
         }
     }
 
-    // Insert one FieldDescriptor.
+    // Attch TClass(constructable) into EntityDescriptor.
+    // It is for create a new object through TClass.
+    //
+    public registEntity(TClass: any) {
+        let entityDescriptor: EntityDescriptor<any> | undefined = this.meta.get(TClass.name);
+        if (entityDescriptor === undefined) {
+            this.meta.set(TClass.name, {
+                TClass: TClass,
+                attrs: new Map<string, PropertyDescriptor<any>>()
+            });
+        } else {
+            entityDescriptor.TClass = TClass;
+        }
+    }
+
+    // Insert one Property Descriptor.
     // It can be merged if it does not conflict.
     //
-    public add<TObject>(fieldDescriptor: FieldDescriptor<TObject>) {
-        // If there is no table, create one.
-        const classKey = fieldDescriptor.class.constructor.toString();
-        let table: TableDescriptor<any> | undefined = this.global[classKey];
-        if (table == undefined) {
-            table = this.global[classKey] = {
-                attrs: new Map<string, FieldDescriptor<TObject>>(),
-                hash: undefined,
-                range: undefined
+    public registPropertyDescriptor<TSource>(propertyDescriptor: PropertyDescriptor<TSource>) {
+        // Validation check.
+        // Is it registered entity in the metadata?
+        let entityDescriptor: EntityDescriptor<any> | undefined = this.meta.get(propertyDescriptor.TClassName);
+        if (entityDescriptor == undefined) {
+            entityDescriptor = {
+                attrs: new Map<string, PropertyDescriptor<TSource>>()
             };
+            this.meta.set(propertyDescriptor.TClassName, entityDescriptor);
         }
 
         // Examine validity and conflict.
         // then insert them in the correct place.
-        this.checkConflict(fieldDescriptor);
-        let thisFieldType: Fieldtype = fetchFromChunkOrValue<Fieldtype>(fieldDescriptor.fieldtype, undefined);
-        if (thisFieldType == Fieldtype.hash) table.hash = fieldDescriptor;
-        if (thisFieldType == Fieldtype.range) table.range = fieldDescriptor;
-        if (thisFieldType == Fieldtype.attr) {
-            table.attrs!!.set(
-                fetchFromChunkOrValue<string>(fieldDescriptor.dynamoPropertyName, undefined),
-                fieldDescriptor
-            );
-        }
+        this.propertyConflictTest(propertyDescriptor);
 
-        // Convert constructor to constructable object.
-        // Then caching it.
-        if (!this.classObjectCache.has(classKey)) {
-            const classObject = eval(`${classKey}; ${fieldDescriptor.class.constructor.name}`);
-            this.classObjectCache.set(classKey, classObject);
+        let thisFieldType: PropertyType = propertyDescriptor.dynamoPropertyType;
+        if (thisFieldType == PropertyType.hash) {
+            entityDescriptor.hash = propertyDescriptor;
+        } else if (thisFieldType == PropertyType.range) {
+            entityDescriptor.range = propertyDescriptor;
+        } else if (thisFieldType == PropertyType.attr) {
+            entityDescriptor.attrs!!.set(propertyDescriptor.dynamoPropertyName, propertyDescriptor);
         }
     }
 
-    // Gets the TableDescriptor associated with a given data object.
+    // Gets the Entity Descriptor associated with a given object.
     // Instead of the class itself, pass over the holder.
     // e.g) getOf(new Something());
     //
-    public getOf<TObject>(object: Object): TableDescriptor<TObject> {
-        const classKey: string = object.constructor.toString();
-        const table = this.global[classKey];
-        if (!table) {
-            throw new Error(`Unregistered entity [${object.constructor.name}]`);
+    public getOf<TSource>(object: any): EntityDescriptor<TSource> {
+        const entityDescriptor: EntityDescriptor<TSource> | undefined = this.meta.get(object.constructor.name);
+        if (entityDescriptor === undefined) {
+            throw new Error(`Unregistered class [${object.constructor.name}]`);
         }
-        if (!table.hash) {
-            throw new Error(`No hashKey in [${object.constructor.name}]`);
+        if (entityDescriptor.TClass === undefined) {
+            throw new Error(`No metadata for ${object.constructor.name}. Make sure @DynamoEntity is append correclty.`);
         }
-        return table;
+        if (!entityDescriptor.hash) {
+            throw new Error(`No HashKey in [${object.constructor.name}]. HashKey is required.`);
+        }
+        return entityDescriptor;
     }
 
-    // Returns a descriptor with the same structure.
-    // If there are many such descriptors, an error.
-    // For the primitive, return undefined.
+    // Returns a TClass with the same entry structure.
+    // Occur error if there are many such TClass.
     //
-    public searchClassObjectLike(item: Item): any {
-        // Primitive check.
-        if (item.N) return undefined;
-        if (item.S) return undefined;
-        if (item.BOOL) return undefined;
+    public getTClassOf(dynamo: Item): any {
+        // Coolect all property name of dynamo.
+        const propertyNames: string[] = [];
+        for (const propertyName in dynamo) {
+            propertyNames.push(propertyName);
+        }
+        propertyNames.sort();
 
-        // Find such descriptors.
-        let found: any[] = [];
-        for (let classKey in this.global) {
-            let classObject: any = undefined;
-            const tableFieldNames: string[] = this.getAllFieldsOf(classKey).map((fieldDescriptor) => {
-                if (!classObject) classObject = fieldDescriptor.class;
-                return fetchFromChunkOrValue<string>(fieldDescriptor.dynamoPropertyName, null);
+        // Find same name-set.
+        const foundTClass: any[] = [];
+        for (const entityDescriptor of this.meta.values()) {
+            let thisTClass: any = undefined;
+            const entryPropertyNames: string[] = this.getAllPropertiesOf(entityDescriptor).map((fieldDescriptor) => {
+                if (thisTClass === undefined) thisTClass = entityDescriptor.TClass;
+                return fieldDescriptor.dynamoPropertyName;
             });
-            const itemFieldNames: string[] = [];
-            for (let name in item) {
-                itemFieldNames.push(name);
-            }
 
-            if (tableFieldNames.length !== itemFieldNames.length) continue;
-            tableFieldNames.sort();
-            itemFieldNames.sort();
+            if (entryPropertyNames.length !== propertyNames.length) continue;
+            entryPropertyNames.sort();
+
             let isMatch: boolean = true;
-            for (let i = 0; i < tableFieldNames.length; i++) {
-                if (tableFieldNames[i] !== itemFieldNames[i]) {
+            for (let i = 0; i < entryPropertyNames.length; i++) {
+                if (entryPropertyNames[i] !== propertyNames[i]) {
                     isMatch = false;
                     break;
                 }
             }
             if (isMatch) {
-                found.push(classObject);
+                foundTClass.push(thisTClass);
             }
         }
 
         // Check validation.
-        if (found.length == 0) {
+        if (foundTClass.length == 0) {
             throw new Error(`No such table.`);
-        } else if (found.length >= 2) {
-            throw new Error(`Table Structure Conflict. [${found.map((f) => f.constructor.name)}]`);
+        } else if (foundTClass.length >= 2) {
+            throw new Error(`Entity Structure Conflict. [${foundTClass.map((f) => f.constructor.name)}]`);
         }
-        console.log("find!", found[0].constructor.name);
 
         // Return constructable object.
         // It it new-keyword-usable object.
-        const classObject = this.classObjectCache.get(found[0].constructor.toString());
-        return classObject;
+        return foundTClass[0];
     }
 
     // Gets the list of all fields in a given table.
     //
-    private getAllFieldsOf(classKey: string): FieldDescriptor<any>[] {
-        const table: TableDescriptor<any> | undefined = this.global[classKey];
-        if (table == undefined) throw new Error(`Unregistered entity. [${classKey}]`);
-
-        const allFields: FieldDescriptor<any>[] = [];
-        if (table.hash) allFields.push(table.hash);
-        if (table.range) allFields.push(table.range);
-        if (table.attrs) allFields.push(...table.attrs.values());
+    private getAllPropertiesOf(entityDescriptor: EntityDescriptor<any>): PropertyDescriptor<any>[] {
+        const allFields: PropertyDescriptor<any>[] = [];
+        if (entityDescriptor.hash) allFields.push(entityDescriptor.hash);
+        if (entityDescriptor.range) allFields.push(entityDescriptor.range);
+        if (entityDescriptor.attrs) allFields.push(...entityDescriptor.attrs.values());
 
         return allFields;
     }
 }
 
-const metadata = new Metadata();
-export default metadata;
+const metaData = new MetaData();
+export default metaData;

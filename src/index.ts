@@ -1,33 +1,34 @@
 import "reflect-metadata";
-import { DynamoField } from "./decorator";
+import { DynamoProperty, DynamoEntity } from "./decorator";
 import DynamoFormation from "./dynamo-formation";
-import Metadata from "./metadata";
+import MetaData from "./metadata";
 import {
-    FieldDecoratorArgs,
-    Datatype,
-    DatatypeArg,
-    Fieldtype,
+    PropertyDecoratorArgs,
+    DataType,
+    DataTypeResolverArg,
+    PropertyType,
     Item,
     FormationMask,
     SerializerArg,
     DeserializerArg,
-    FieldDescriptor,
+    PropertyDescriptor,
     Serializer,
     Deserializer
 } from "./type";
 export {
-    DynamoField,
+    DynamoEntity,
+    DynamoProperty,
+    DataTypeResolverArg,
     DynamoFormation,
-    DatatypeArg,
-    Metadata,
-    Datatype,
-    Fieldtype,
+    MetaData,
+    DataType,
+    PropertyType,
     Item,
     FormationMask,
     Serializer,
     Deserializer,
     SerializerArg,
     DeserializerArg,
-    FieldDecoratorArgs,
-    FieldDescriptor
+    PropertyDecoratorArgs,
+    PropertyDescriptor
 };

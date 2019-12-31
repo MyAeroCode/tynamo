@@ -5,13 +5,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
 const decorator_1 = require("./decorator");
-exports.DynamoField = decorator_1.DynamoField;
+exports.DynamoProperty = decorator_1.DynamoProperty;
+exports.DynamoEntity = decorator_1.DynamoEntity;
 const dynamo_formation_1 = __importDefault(require("./dynamo-formation"));
 exports.DynamoFormation = dynamo_formation_1.default;
 const metadata_1 = __importDefault(require("./metadata"));
-exports.Metadata = metadata_1.default;
+exports.MetaData = metadata_1.default;
 const type_1 = require("./type");
-exports.Datatype = type_1.Datatype;
-exports.Fieldtype = type_1.Fieldtype;
+exports.PropertyDecoratorArgs = type_1.PropertyDecoratorArgs;
+exports.DataType = type_1.DataType;
+exports.DataTypeResolverArg = type_1.DataTypeResolverArg;
+exports.PropertyType = type_1.PropertyType;
 exports.FormationMask = type_1.FormationMask;
+exports.SerializerArg = type_1.SerializerArg;
+exports.DeserializerArg = type_1.DeserializerArg;
+exports.PropertyDescriptor = type_1.PropertyDescriptor;
 //# sourceMappingURL=index.js.map

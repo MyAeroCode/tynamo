@@ -1,7 +1,7 @@
-import { AttributeMap } from "aws-sdk/clients/dynamodb";
+import { AttributeMap, AttributeValue } from "aws-sdk/clients/dynamodb";
 export declare type Chunk<TReturn, TArg> = (arg: TArg) => TReturn;
 export declare type ChunkOrValue<TSource, TArg> = TSource | Chunk<TSource, TArg>;
-export declare enum Datatype {
+export declare enum DataType {
     S = "S",
     N = "N",
     B = "B",
@@ -12,55 +12,52 @@ export declare enum Datatype {
     L = "L",
     NULL = "NULL",
     BOOL = "BOOL",
-    INJECT = "INJECT"
+    __SCALAR__ = "__SCALAR__"
 }
-export declare enum Fieldtype {
+export declare enum PropertyType {
     hash = "HASH",
     range = "RANGE",
     attr = "ATTR"
 }
 export declare type Item = AttributeMap;
-export interface DatatypeArg<TSource> {
+export declare type PropertyValue = AttributeValue;
+export declare class DataTypeResolverArg<TSource> {
     source: TSource;
     sourcePropertyName: string;
 }
-export interface SerializerArg<TSource> {
+export declare class SerializerArg<TSource> {
     source: TSource;
-    sourcePropertyName: string;
+    propertyDescriptor: PropertyDescriptor<TSource>;
 }
-export interface DeserializerArg {
-    object: any;
+export declare class DeserializerArg {
     dynamo: Item;
-    dynamoDatatype: Datatype;
-    dynamoPropertyName: string;
-    sourcePropertyName: string;
+    propertyDescriptor: PropertyDescriptor<any>;
 }
-export interface FieldDecoratorArgs<TSource> {
-    datatype?: DatatypeOrChunk<TSource>;
+export declare class PropertyDecoratorArgs<TSource> {
+    dataType?: DataType;
+    nullable?: boolean;
     propertyName?: string;
     serializer?: Serializer<TSource>;
     deserializer?: Deserializer<TSource>;
 }
-export interface FieldDescriptor<TSource> {
-    class: Object;
+export declare class PropertyDescriptor<TSource> {
+    TClassName: string;
+    nullable: boolean;
+    dataType: DataType;
     serializer: Serializer<TSource>;
     deserializer: Deserializer<TSource>;
-    datatype: DatatypeOrChunk<TSource>;
-    fieldtype: Fieldtype;
-    objectPropertyName: string;
+    dynamoPropertyType: PropertyType;
+    sourcePropertyName: string;
     dynamoPropertyName: string;
 }
 export declare type Serializer<TSource> = Chunk<any, SerializerArg<TSource>>;
 export declare type Deserializer<TSource> = Chunk<Partial<TSource>, DeserializerArg>;
-export declare type DatatypeOrChunk<TSource> = ChunkOrValue<Datatype, DatatypeArg<TSource>>;
-export declare type TableDescriptor<TSource> = {
-    hash?: FieldDescriptor<TSource>;
-    range?: FieldDescriptor<TSource>;
-    attrs?: Map<string, FieldDescriptor<TSource>>;
-};
-export declare type GlobalDescriptor = {
-    [classKey: string]: TableDescriptor<any> | undefined;
-};
+export declare class EntityDescriptor<TSource> {
+    TClass?: any;
+    hash?: PropertyDescriptor<TSource>;
+    range?: PropertyDescriptor<TSource>;
+    attrs?: Map<string, PropertyDescriptor<TSource>>;
+}
 export declare enum FormationMask {
     HashKey = 1,
     RangeKey = 2,
