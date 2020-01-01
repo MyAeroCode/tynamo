@@ -47,8 +47,9 @@ class DynamoFormation {
                 realDataType = propertyDescriptor.dataType = type_1.DataType.S;
             else if (source.constructor === Boolean)
                 realDataType = propertyDescriptor.dataType = type_1.DataType.BOOL;
-            else
-                throw new Error();
+            else {
+                throw new Error(`Please specify dataType of non-scalar data. -> [${propertyDescriptor.TClassName}.${propertyDescriptor.dynamoPropertyName}]`);
+            }
         }
         function resolve(value) {
             return {
@@ -146,8 +147,7 @@ class DynamoFormation {
     }
     // Convert dynamoItem to sourceObject.
     //
-    deformation(dynamo) {
-        const TClass = metadata_1.default.getTClassOf(dynamo);
+    deformation(dynamo, TClass = metadata_1.default.getTClassOf(dynamo)) {
         // Validation check.
         // Is it registered in the metadata?
         const holder = new TClass();
