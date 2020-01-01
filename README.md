@@ -453,6 +453,7 @@ const sourceItem = TynamoFormation.deformation(dynamoItemKey); //< error.
 
 ### Explicit deformation
 If you want, you can explicitly hand over the type.
+
 There is little difference in performance.
 ```ts
 const badCat = new Cat(666, "garfield");
@@ -464,6 +465,7 @@ const sourceItem = TynamoFormation.deformation(dynamoItem, Cat);
 ***
 ### Using with DynamoDB(AWS-SDK)
 In fact, Item type is an alias of AttributeMap.
+
 Therefore, Item type can be used where AttributeMap is required.
 
 ### putItem
