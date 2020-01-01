@@ -51,7 +51,7 @@ It will be formationed as below, and this can be used as a parameter that requir
         + [Formation mask](#formation-mask)
         + [Implicit deformation](#implicit-deformation)
         + [Explicit deformation](#explicit-deformation)
-    + [Using with DynamoDB(AWS-SDK)](#user-content-using-with-dynamodb-aws-sdk)
+    + [Using with DynamoDB(AWS-SDK)](#user-content-using-with-dynamodbaws-sdk)
         + [putItem](#putitem)
         + [getItem](#getitem)
 
@@ -463,6 +463,38 @@ const sourceItem = TynamoFormation.deformation(dynamoItem, Cat);
 
 ***
 ### Using with DynamoDB(AWS-SDK)
-### putItem
-### getItem
+In fact, Item type is an alias of AttributeMap.
+Therefore, Item type can be used where AttributeMap is required.
 
+### putItem
+```ts
+const badCat = new Cat(666, "garfield");
+const conn = new AWS.DynamoDB({
+    region: "...",
+    endpoint: "http://localhost:8000"
+});
+const result = await conn
+    .putItem({
+        TableName: "Cat",
+        Item: TynamoFormation.formation(badCat)
+    })
+    .promise();
+```
+
+### getItem
+```ts
+const badCat = new Cat(666, "garfield");
+const conn = new AWS.DynamoDB({
+    region: "...",
+    endpoint: "http://localhost:8000"
+});
+await conn
+    .getItem({
+        TableName: "Cat",
+        Key: TynamoFormation.formation(badCat, FormationMask.KeyOnly)
+    })
+    .promise()
+    .then((response) => {
+        console.log(JSON.stringify(response.Item, null, 4));
+    });
+```
