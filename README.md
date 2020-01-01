@@ -34,27 +34,26 @@ It will be formationed as below, and this can be used as a parameter that requir
 ```
 
 ## Table of Contents
-+ Installation
-+ Usage
-    + Define dynamo entity
-        + Entity conflict
-    + Define dynamo property
-        + Nested entity
-        + Array of entity
-        + Support property type
-        + Support property data type
-        + Alias
-        + Custom serializer
-        + Custom deserializer
-    + Mapping
-        + Formation
-        + Formation mask
-        + Implicit deformation
-        + Explicit deformation
-        
-    + Using with DynamoDB(AWS-SDK)
-        + putItem
-        + getItem
++ [Installation](#installation)
++ [Usage](#usage)
+    + [Define dynamo entity](#define-dynamo-entity)
+        + [Entity conflict](#entity-conflict)
+    + [Define dynamo property](#define-dynamo-property)
+        + [Nested entity](#nested-entity)
+        + [Array of entity](#array-of-entity)
+        + [Support property type](#support-property-type)
+        + [Support property data type](#support-property-data-type)
+        + [Alias](#alias)
+        + [Custom serializer](#custom-serializer)
+        + [Custom deserializer](#custom-deserializer)
+    + [Mapping](#mapping)
+        + [Formation](#formation)
+        + [Formation mask](#formation-mask)
+        + [Implicit deformation](#implicit-deformation)
+        + [Explicit deformation](#explicit-deformation)
+    + [Using with DynamoDB(AWS-SDK)](#user-content-using-with-dynamodb-aws-sdk)
+        + [putItem](#putitem)
+        + [getItem](#getitem)
 
 
 ## Installation
@@ -406,7 +405,7 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat, FormationMask.KeyOnly);
+const dynamoItemKey: Item = TynamoFormation.formation(badCat, FormationMask.KeyOnly);
 ```
 It will be formationed as,
 ```ts
@@ -443,6 +442,14 @@ It is same for nested or listed Entities.
 Cat {id: 666, name: "garfield"}
 ```
 
+Note that key item cannot be deformed.
+
+Don't :
+```ts
+const dynamoItemKey: Item = TynamoFormation.formation(badCat, FormationMask.KeyOnly);
+const sourceItem = TynamoFormation.deformation(dynamoItemKey); //< error.
+```
+
 
 ### Explicit deformation
 If you want, you can explicitly hand over the type.
@@ -452,6 +459,7 @@ const badCat = new Cat(666, "garfield");
 const dynamoItem: Item = TynamoFormation.formation(badCat);
 const sourceItem = TynamoFormation.deformation(dynamoItem, Cat);
 ```
+
 
 ***
 ### Using with DynamoDB(AWS-SDK)
