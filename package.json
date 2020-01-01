@@ -7,7 +7,13 @@
         "test": "mocha -r ts-node/register ./**/*.test.ts",
         "build": "tsc"
     },
-    "keywords": [],
+    "keywords": [
+        "dynamodb",
+        "dynamodb orm",
+        "nodejs dynamodb orm",
+        "javascript dynamodb orm",
+        "typescript dynamodb orm"
+    ],
     "author": "AeroCode",
     "license": "MIT",
     "devDependencies": {
