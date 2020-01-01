@@ -12,8 +12,7 @@ var DataType;
     DataType["M"] = "M";
     DataType["L"] = "L";
     DataType["NULL"] = "NULL";
-    DataType["BOOL"] = "BOOL";
-    DataType["__SCALAR__"] = "__SCALAR__"; // Default, maybe S|N|B.
+    DataType["BOOL"] = "BOOL"; // An attribute of type Boolean. For example:  "BOOL": true
 })(DataType = exports.DataType || (exports.DataType = {}));
 // Property Type of DynamoDB.
 // Specially, HASH and RANGE are KeyType.

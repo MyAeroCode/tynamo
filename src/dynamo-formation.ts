@@ -12,7 +12,7 @@ class DynamoFormation {
         if (value.constructor === Number) return (value as number).toString();
         if (value.constructor === String) return value as string;
         if (value.constructor === Boolean) return value as boolean;
-        throw new Error(`Please specify dataType of non-scalar data.`);
+        throw new Error(`'${value}' is not scalar.`);
     }
 
     // Convert sourceProperty to dynamoProperty.
@@ -31,18 +31,6 @@ class DynamoFormation {
         if (source === undefined || source === null) {
             if (propertyDescriptor.nullable) realDataType = DataType.NULL;
             else throw new Error(`Non-nullable property sholud not NULL or undefined`);
-        }
-
-        // scalar check.
-        if (realDataType === DataType.__SCALAR__) {
-            if (source.constructor === Number) realDataType = propertyDescriptor.dataType = DataType.N;
-            else if (source.constructor === String) realDataType = propertyDescriptor.dataType = DataType.S;
-            else if (source.constructor === Boolean) realDataType = propertyDescriptor.dataType = DataType.BOOL;
-            else {
-                throw new Error(
-                    `Please specify dataType of non-scalar data. -> [${propertyDescriptor.TClassName}.${propertyDescriptor.dynamoPropertyName}]`
-                );
-            }
         }
 
         function resolve(value: any): Item {

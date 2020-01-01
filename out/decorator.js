@@ -17,8 +17,18 @@ function DynamoProperty(propertyType, args) {
     return function createDynamoPropertyDecorator(TClassObject, sourcePropertyName) {
         if (!args)
             args = {};
-        if (!args.dataType)
-            args.dataType = type_1.DataType.__SCALAR__;
+        if (!args.dataType) {
+            const scalarClass = Reflect.getMetadata("design:type", TClassObject, sourcePropertyName);
+            if (scalarClass === String)
+                args.dataType = type_1.DataType.S;
+            else if (scalarClass === Number)
+                args.dataType = type_1.DataType.N;
+            else if (scalarClass === Boolean)
+                args.dataType = type_1.DataType.BOOL;
+            else {
+                throw new Error(`Please specify DynamoPropertyDataType. -> [${TClassObject.constructor.name}.${sourcePropertyName.toString()}]`);
+            }
+        }
         if (!args.nullable)
             args.nullable = false;
         if (!args.serializer)

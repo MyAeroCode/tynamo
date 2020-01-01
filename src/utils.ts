@@ -8,7 +8,6 @@ export const defaultSerializer: Serializer<any> = (arg: SerializerArg<any>) => {
 
 // Default deserializer.
 export const defaultDeserializer: Deserializer<any> = (arg: DeserializerArg): any => {
-    if (arg.propertyDescriptor.dataType === DataType.__SCALAR__) throw new Error();
     return arg.dynamo[arg.propertyDescriptor.dynamoPropertyName];
 };
 

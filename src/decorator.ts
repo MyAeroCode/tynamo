@@ -12,7 +12,19 @@ export function DynamoEntity(TClass: any) {
 export function DynamoProperty<TObject>(propertyType: PropertyType, args?: PropertyDecoratorArgs<TObject>) {
     return function createDynamoPropertyDecorator(TClassObject: Object, sourcePropertyName: string | symbol): void {
         if (!args) args = {};
-        if (!args.dataType) args.dataType = DataType.__SCALAR__;
+        if (!args.dataType) {
+            const scalarClass = Reflect.getMetadata("design:type", TClassObject, sourcePropertyName);
+            if (scalarClass === String) args.dataType = DataType.S;
+            else if (scalarClass === Number) args.dataType = DataType.N;
+            else if (scalarClass === Boolean) args.dataType = DataType.BOOL;
+            else {
+                throw new Error(
+                    `Please specify DynamoPropertyDataType. -> [${
+                        TClassObject.constructor.name
+                    }.${sourcePropertyName.toString()}]`
+                );
+            }
+        }
         if (!args.nullable) args.nullable = false;
         if (!args.serializer) args.serializer = defaultSerializer;
         if (!args.deserializer) args.deserializer = defaultDeserializer;

@@ -14,8 +14,7 @@ export enum DataType {
     M = "M", // An attribute of type Map. For example:  "M": {"Name": {"S": "Joe"}, "Age": {"N": "35"}}
     L = "L", // An attribute of type List. For example:  "L": [ {"S": "Cookies"} , {"S": "Coffee"}, {"N", "3.14159"}]
     NULL = "NULL", // An attribute of type Null. For example:  "NULL": true
-    BOOL = "BOOL", // An attribute of type Boolean. For example:  "BOOL": true
-    __SCALAR__ = "__SCALAR__" // Default, maybe S|N|B.
+    BOOL = "BOOL" // An attribute of type Boolean. For example:  "BOOL": true
 }
 
 // Property Type of DynamoDB.
@@ -85,6 +84,7 @@ export class EntityDescriptor<TSource> {
     hash?: PropertyDescriptor<TSource>;
     range?: PropertyDescriptor<TSource>;
     attrs?: Map<string, PropertyDescriptor<TSource>>;
+    isStructureCached?: boolean;
 }
 export enum FormationMask {
     HashKey = 0b001,

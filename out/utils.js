@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const type_1 = require("./type");
 // Default serializer.
 exports.defaultSerializer = (arg) => {
     const serialized = arg.source[arg.propertyDescriptor.sourcePropertyName];
@@ -8,8 +7,6 @@ exports.defaultSerializer = (arg) => {
 };
 // Default deserializer.
 exports.defaultDeserializer = (arg) => {
-    if (arg.propertyDescriptor.dataType === type_1.DataType.__SCALAR__)
-        throw new Error();
     return arg.dynamo[arg.propertyDescriptor.dynamoPropertyName];
 };
 // Get the value from chunk or value.

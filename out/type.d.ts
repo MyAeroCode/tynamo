@@ -11,8 +11,7 @@ export declare enum DataType {
     M = "M",
     L = "L",
     NULL = "NULL",
-    BOOL = "BOOL",
-    __SCALAR__ = "__SCALAR__"
+    BOOL = "BOOL"
 }
 export declare enum PropertyType {
     hash = "HASH",
@@ -57,6 +56,7 @@ export declare class EntityDescriptor<TSource> {
     hash?: PropertyDescriptor<TSource>;
     range?: PropertyDescriptor<TSource>;
     attrs?: Map<string, PropertyDescriptor<TSource>>;
+    isStructureCached?: boolean;
 }
 export declare enum FormationMask {
     HashKey = 1,
