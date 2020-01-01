@@ -1,4 +1,4 @@
-import { DynamoProperty, PropertyType, DataType, DynamoFormation, Item, DynamoEntity } from "../index";
+import { DynamoProperty, PropertyType, DataType, TynamoFormation, Item, DynamoEntity } from "../index";
 import { deepEqual, strictEqual } from "assert";
 
 describe("[#03] nullable-02", () => {
@@ -21,7 +21,7 @@ describe("[#03] nullable-02", () => {
     let dynamoItem: Item;
     let entityItem: Test03_Entity;
     it("formation", () => {
-        dynamoItem = DynamoFormation.formation(entity);
+        dynamoItem = TynamoFormation.formation(entity);
         deepEqual(
             dynamoItem,
             {
@@ -33,7 +33,7 @@ describe("[#03] nullable-02", () => {
     });
 
     it("deformation", () => {
-        entityItem = DynamoFormation.deformation(dynamoItem);
+        entityItem = TynamoFormation.deformation(dynamoItem);
         deepEqual(
             entityItem,
             {

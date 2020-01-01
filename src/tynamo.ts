@@ -4,7 +4,7 @@ import { fetchFromChunkOrValue } from "./utils";
 
 // Performs the interconversion between DynamoItem and the object.
 //
-class DynamoFormation {
+class TynamoFormation {
     // Convert sourceScalar to dynamoScalar.
     //
     formationScalar(value: number | string | boolean): string | boolean {
@@ -151,5 +151,5 @@ class DynamoFormation {
     }
 }
 
-const dynamoFormation = new DynamoFormation();
-export default dynamoFormation;
+const tynamoFormation = new TynamoFormation();
+export default tynamoFormation;

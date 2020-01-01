@@ -1,4 +1,4 @@
-import { DynamoEntity, DynamoProperty, PropertyType, DynamoFormation, Item, Serializer, Deserializer } from "../index";
+import { DynamoEntity, DynamoProperty, PropertyType, TynamoFormation, Item, Serializer, Deserializer } from "../index";
 import chai from "chai";
 
 describe("[#07] error-02", () => {
@@ -10,7 +10,7 @@ describe("[#07] error-02", () => {
         const entity: DynamoEntityMissing = Object.assign(new DynamoEntityMissing(), {
             _a: "Hello"
         });
-        chai.assert.throws(() => DynamoFormation.formation(entity));
+        chai.assert.throws(() => TynamoFormation.formation(entity));
     });
 
     it("When HashKey missing.", () => {
@@ -22,7 +22,7 @@ describe("[#07] error-02", () => {
         const entity: HashKeyMissing = Object.assign(new HashKeyMissing(), {
             _b: "Hello"
         });
-        chai.assert.throws(() => DynamoFormation.formation(entity));
+        chai.assert.throws(() => TynamoFormation.formation(entity));
     });
 
     it("When HashKey is nullable.", () => {
@@ -37,7 +37,7 @@ describe("[#07] error-02", () => {
             const entity: HashKeyNullable = Object.assign(new HashKeyNullable(), {
                 _c: "Hello"
             });
-            DynamoFormation.formation(entity);
+            TynamoFormation.formation(entity);
         });
     });
 
@@ -57,7 +57,7 @@ describe("[#07] error-02", () => {
                 _d: "Hello",
                 _e: "Hello"
             });
-            DynamoFormation.formation(entity);
+            TynamoFormation.formation(entity);
         });
     });
 });

@@ -1,5 +1,5 @@
 {
-    "name": "dynamo-formation",
+    "name": "tynamo",
     "version": "1.4.1",
     "main": "out/index.js",
     "types": "out/index.d.ts",

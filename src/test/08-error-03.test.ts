@@ -1,4 +1,4 @@
-import { DynamoEntity, DynamoProperty, PropertyType, DynamoFormation, Item, Serializer, Deserializer } from "../index";
+import { DynamoEntity, DynamoProperty, PropertyType, TynamoFormation, Item, Serializer, Deserializer } from "../index";
 import chai from "chai";
 
 describe("[#08] error-03", () => {

@@ -8,7 +8,7 @@ const metadata_1 = __importDefault(require("./metadata"));
 const utils_1 = require("./utils");
 // Performs the interconversion between DynamoItem and the object.
 //
-class DynamoDBFormation {
+class TynamoFormation {
     // Convert sourceScalar to dynamoScalar.
     //
     formationScalar(value) {
@@ -156,6 +156,6 @@ class DynamoDBFormation {
         return holder;
     }
 }
-const dynamoFormation = new DynamoDBFormation();
-exports.default = dynamoFormation;
-//# sourceMappingURL=dynamo-formation.js.map
+const tynamoFormation = new TynamoFormation();
+exports.default = tynamoFormation;
+//# sourceMappingURL=tynamo.js.map

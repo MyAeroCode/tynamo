@@ -158,4 +158,4 @@ class DynamoDBFormation {
 }
 const dynamoFormation = new DynamoDBFormation();
 exports.default = dynamoFormation;
-//# sourceMappingURL=dynamo-formation.js.map
+//# sourceMappingURL=dyformation.js.map

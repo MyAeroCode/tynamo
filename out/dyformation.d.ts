@@ -8,4 +8,4 @@ declare class DynamoDBFormation {
 }
 declare const dynamoFormation: DynamoDBFormation;
 export default dynamoFormation;
-//# sourceMappingURL=dynamo-formation.d.ts.map
+//# sourceMappingURL=dyformation.d.ts.map

@@ -1,4 +1,4 @@
-import { DynamoEntity, DynamoProperty, PropertyType, DynamoFormation, Item, Serializer, Deserializer } from "../index";
+import { DynamoEntity, DynamoProperty, PropertyType, TynamoFormation, Item, Serializer, Deserializer } from "../index";
 import chai from "chai";
 
 describe("[#09] error-04", () => {
@@ -16,7 +16,7 @@ describe("[#09] error-04", () => {
             const entity: AttrUndefined = Object.assign(new AttrUndefined(), {
                 ___a: "Hello"
             });
-            DynamoFormation.formation(entity);
+            TynamoFormation.formation(entity);
         });
     });
 
@@ -26,7 +26,7 @@ describe("[#09] error-04", () => {
                 ___a: "Hello",
                 ___b: undefined
             });
-            DynamoFormation.formation(entity);
+            TynamoFormation.formation(entity);
         });
     });
 
@@ -36,7 +36,7 @@ describe("[#09] error-04", () => {
                 ___a: "Hello",
                 ___b: null
             });
-            DynamoFormation.formation(entity);
+            TynamoFormation.formation(entity);
         });
     });
 
@@ -46,7 +46,7 @@ describe("[#09] error-04", () => {
                 ___a: "Hello",
                 ___b: ""
             });
-            DynamoFormation.formation(entity);
+            TynamoFormation.formation(entity);
         });
     });
 
@@ -55,6 +55,6 @@ describe("[#09] error-04", () => {
             ___a: "Hello",
             ___b: "H"
         });
-        DynamoFormation.formation(entity);
+        TynamoFormation.formation(entity);
     });
 });

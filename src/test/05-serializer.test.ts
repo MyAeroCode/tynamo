@@ -1,4 +1,4 @@
-import { DynamoEntity, DynamoProperty, PropertyType, DynamoFormation, Item, Serializer, Deserializer } from "../index";
+import { DynamoEntity, DynamoProperty, PropertyType, TynamoFormation, Item, Serializer, Deserializer } from "../index";
 import { deepEqual, strictEqual } from "assert";
 
 describe("[#05] serializer", () => {
@@ -34,7 +34,7 @@ describe("[#05] serializer", () => {
     let dynamoItem: Item;
     let entityItem: Test05_Entity;
     it("formation", () => {
-        dynamoItem = DynamoFormation.formation(entity);
+        dynamoItem = TynamoFormation.formation(entity);
         deepEqual(
             dynamoItem,
             {
@@ -45,7 +45,7 @@ describe("[#05] serializer", () => {
     });
 
     it("deformation", () => {
-        entityItem = DynamoFormation.deformation(dynamoItem);
+        entityItem = TynamoFormation.deformation(dynamoItem);
         deepEqual(entityItem, entity, "-");
         strictEqual(entityItem.constructor, Test05_Entity);
     });
