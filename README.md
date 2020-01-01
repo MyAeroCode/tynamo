@@ -1,6 +1,5 @@
 # tynamo
 ORM based dynamo entity mapper. Internally uses [reflect-metadata](https://github.com/rbuckton/reflect-metadata).
-
 It helps you use DynamoDB without deviating from the basic AWS-SDK usage.
 
 For example,
