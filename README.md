@@ -39,7 +39,8 @@ It will be formationed as below, and this can be used as a parameter that requir
     + Define dynamo entity
         + Entity conflict
     + Define dynamo property
-        + Nested item
+        + Nested entity
+        + Array of entity
         + Support property type
         + Support property data type
         + Alias
@@ -47,7 +48,10 @@ It will be formationed as below, and this can be used as a parameter that requir
         + Custom deserializer
     + Mapping
         + Formation
-        + Deformation
+        + Formation mask
+        + Implicit deformation
+        + Explicit deformation
+        
     + Using with DynamoDB(AWS-SDK)
         + putItem
         + getItem
@@ -135,8 +139,8 @@ It will be formationed as,
 }
 ```
 
-### Nested item
-Classes with "@DynamoEntity" may be nested.
+### Nested entity
+Only classes with "@DynamoEntity" be nested with `DataType.M`.
 
 For example,
 ```ts
@@ -197,6 +201,31 @@ It will be formationed as,
     }
 }
 ```
+
+### Array of entity
+Only classes with "@DynamoEntity" be list-element with `DataType.L`.
+```ts
+@DynamoEntity
+class Cat {
+    @DynamoProperty(PropertyType.hash)
+    id: number;
+
+    @DynamoProperty(PropertyType.attr)
+    name: string;
+
+    @DynamoProperty(PropertyType.attr, {
+        dataType: DataType.L
+    })
+    friends: Cat[];
+
+    constructor(id: number, name: string, friends: Cat[]) {
+        this.id = id;
+        this.name = name;
+        this.friends = friends;
+    }
+}
+```
+
 
 ### Support property type
 | PropertyType  | Require                 |
@@ -325,8 +354,105 @@ class Entity {
 
 ***
 ### Mapping
+You can map the DynamoEntity with a TynamoFormation object.
+```ts
+import { TynamoFormation } from "tynamo";
+```
+
 ### Formation
-### Deformation
+Converts objects created by the constructor of the class declared DynamoEntity to the DynamoDB Item.
+
+Do :
+```ts
+const badCat = new Cat(666, "garfield");
+const dynamoItem: Item = TynamoFormation.formation(badCat);
+```
+
+Don't:
+```ts
+const badCat = {
+    id: 666,
+    name: "garfield"
+};
+const dynamoItem: Item = TynamoFormation.formation(badCat);
+```
+
+### Formation mask
+With Mask, only certain information can be included in the DynamoItem.
+
+```ts
+export enum FormationMask {
+    HashKey  = 0b001,
+    RangeKey = 0b010,
+    Body     = 0b100,
+    KeyOnly  = 0b011,  // == HashKey | RangeKey
+    Full     = 0b111   // defualt, == HashKey | RangeKey | Body
+}
+```
+
+For example,
+```ts
+@DynamoEntity
+class Cat {
+    @DynamoProperty(PropertyType.hash)
+    id: number;
+
+    @DynamoProperty(PropertyType.attr)
+    name: string;
+
+    constructor(id: number, name: string) {
+        this.id = id;
+        this.name = name;
+    }
+}
+const badCat = new Cat(666, "garfield");
+const dynamoItem: Item = TynamoFormation.formation(badCat, FormationMask.KeyOnly);
+```
+It will be formationed as,
+```ts
+{
+    "id": {
+        "N": "666"
+    }
+}
+```
+
+### Implicit deformation
+Convert to an object of Entity that has the same signature as a given DynamoItem.
+```ts
+@DynamoEntity
+class Cat {
+    @DynamoProperty(PropertyType.hash)
+    id: number;
+
+    @DynamoProperty(PropertyType.attr)
+    name: string;
+
+    constructor(id: number, name: string) {
+        this.id = id;
+        this.name = name;
+    }
+}
+const badCat = new Cat(666, "garfield");
+const dynamoItem: Item = TynamoFormation.formation(badCat);
+const sourceItem = TynamoFormation.deformation(dynamoItem);
+```
+It will be deformationed as object of Cat.
+It is same for nested or listed Entities.
+```
+Cat {id: 666, name: "garfield"}
+```
+
+
+### Explicit deformation
+If you want, you can explicitly hand over the type.
+There is little difference in performance.
+```ts
+const badCat = new Cat(666, "garfield");
+const dynamoItem: Item = TynamoFormation.formation(badCat);
+const sourceItem = TynamoFormation.deformation(dynamoItem, Cat);
+```
+
 ***
 ### Using with DynamoDB(AWS-SDK)
 ### putItem
