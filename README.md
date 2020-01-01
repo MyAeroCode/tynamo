@@ -42,6 +42,7 @@ It will be formationed as below, and this can be used as a parameter that requir
         + Nested item
         + Support property type
         + Support property data type
+        + Alias
         + Custom serializer
         + Custom deserializer
     + Mapping
@@ -218,12 +219,110 @@ It will be formationed as,
 | M         | @DynamoEntity        |
 | L         | Array<@DynamoEntity> |
 
+### Alias
+You can set custom name of the dynamoProperty.
+
+For example,
+```ts
+@DynamoEntity
+class Cat {
+    @DynamoProperty(PropertyType.hash, {
+        propertyName: "number_id"
+    })
+    __id: number;
+
+    @DynamoProperty(PropertyType.attr)
+    name: string;
+
+    constructor(id: number, name: string) {
+        this.__id = id;
+        this.name = name;
+    }
+}
+const badCat = new Cat(666, "garfield");
+const dynamoItem: Item = TynamoFormation.formation(badCat);
+```
+It will be formationed as,
+```
+{
+    "number_id": {
+        "N": "666"
+    },
+    "name": {
+        "S": "garfield"
+    }
+}
+```
+
 ### Custom serializer
 Custom serializer allows you to combine two or more values that exist in the source.
 
+For example,
+```ts
+@DynamoEntity
+class Entity {
+    @DynamoProperty(PropertyType.hash, {
+        propertyName: "id",
+        serializer: (arg: SerializerArg<Entity>) => {
+            const source: Entity = arg.source;
+            return [source.x, source.y].join("_");
+        }
+    })
+    __id?: string;
 
+    x: string;
+    y: string;
+
+    constructor(x: string, y: string) {
+        this.x = x;
+        this.y = y;
+    }
+}
+const entity = new Entity("Hello", "World!");
+const dynamoItem: Item = TynamoFormation.formation(entity);
+```
+It will be formationed as,
+```
+{
+    "id": {
+        "S": "Hello_World!"
+    }
+}
+```
 
 ### Custom deserializer
+Custom deserializer allows you to revert to the original object based on the value of DynamoItem.
+
+For example,
+```ts
+@DynamoEntity
+class Entity {
+    @DynamoProperty(PropertyType.hash, {
+        propertyName: "id",
+        serializer: (arg: SerializerArg<Entity>) => {
+            const source: Entity = arg.source;
+            return [source.x, source.y].join("_");
+        },
+        deserializer: (arg: DeserializerArg): Partial<Entity> => {
+            const token: string[] = arg.dynamo.id.S!!.split("_");
+            return {
+                x: token[0],
+                y: token[1]
+            };
+        }
+    })
+    __id?: string;
+
+    x: string;
+    y: string;
+
+    constructor(x: string, y: string) {
+        this.x = x;
+        this.y = y;
+    }
+}
+```
+
 ***
 ### Mapping
 ### Formation
