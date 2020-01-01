@@ -1,6 +1,6 @@
 {
     "name": "dynamo-formation",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "main": "out/index.js",
     "types": "out/index.d.ts",
     "scripts": {

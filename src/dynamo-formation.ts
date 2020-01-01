@@ -81,7 +81,7 @@ class DynamoFormation {
             throw new Error(`Empty object is not allowd.`);
         }
 
-        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getOf(source);
+        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByHolder(source);
         const propertyDescriptors: PropertyDescriptor<TSource>[] = [];
         const HASH = entityDescriptor.hash;
         const RANGE = entityDescriptor.range;
@@ -130,11 +130,11 @@ class DynamoFormation {
 
     // Convert dynamoItem to sourceObject.
     //
-    deformation(dynamo: Item, TClass: any = MetaData.getTClassOf(dynamo)): any {
+    deformation(dynamo: Item, TClass: any = MetaData.getTClassByDynamo(dynamo)): any {
         // Validation check.
         // Is it registered in the metadata?
         const holder = new TClass();
-        const entityDescriptor: EntityDescriptor<any> = MetaData.getOf(holder);
+        const entityDescriptor: EntityDescriptor<any> = MetaData.getEntityDescriptorByHolder(holder);
 
         // Gets all field descriptor to create the Object.
         // Then deserialize and merge all fields.

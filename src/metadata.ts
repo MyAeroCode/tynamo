@@ -1,9 +1,8 @@
-import { PropertyDescriptor, EntityDescriptor, PropertyType, Item } from "./type";
-import { fetchFromChunkOrValue } from "./utils";
-import { DataType } from ".";
+import { PropertyDescriptor, EntityDescriptor, PropertyType, Item, DataType } from "./type";
 
 class MetaData {
     private meta = new Map<string, EntityDescriptor<any>>();
+    private getTClassByDynamoCache = new Map<string, any>();
 
     // Examine for conflicting property.
     // Test if the duplicate keyType or propertyName.
@@ -97,7 +96,7 @@ class MetaData {
     // Instead of the class itself, pass over the holder.
     // e.g) getOf(new Something());
     //
-    public getOf<TSource>(object: any): EntityDescriptor<TSource> {
+    public getEntityDescriptorByHolder<TSource>(object: any): EntityDescriptor<TSource> {
         const entityDescriptor: EntityDescriptor<TSource> | undefined = this.meta.get(object.constructor.name);
         if (entityDescriptor === undefined) {
             throw new Error(`Unregistered class [${object.constructor.name}]`);
@@ -114,48 +113,74 @@ class MetaData {
     // Returns a TClass with the same entry structure.
     // Occur error if there are many such TClass.
     //
-    public getTClassOf(dynamo: Item): any {
-        // Coolect all property name of dynamo.
-        const propertyNames: string[] = [];
-        for (const propertyName in dynamo) {
-            propertyNames.push(propertyName);
+    // @TODO    Currently, there is only PropertyName in the signature.
+    //          Put PropertyDataType in signature in the near future.
+    //
+    public getTClassByDynamo(dynamo: Item): any {
+        // Collect all signature of dynamo properties.
+        const targetPropertySignatures: string[] = [];
+        for (const dynamoPropertyName in dynamo) {
+            // Calc signature.
+            targetPropertySignatures.push(dynamoPropertyName);
         }
-        propertyNames.sort();
+        targetPropertySignatures.sort();
+        const targetSignature: string = targetPropertySignatures.join(";");
 
-        // Find same name-set.
-        const foundTClass: any[] = [];
+        // At first, find from cache.
+        let targetTClass: any = this.getTClassByDynamoCache.get(targetSignature);
+        if (targetTClass !== undefined) return targetTClass;
+
+        // If not in the cache, navigate to the uncached TClasses.
         for (const entityDescriptor of this.meta.values()) {
-            let thisTClass: any = undefined;
-            const entryPropertyNames: string[] = this.getAllPropertiesOf(entityDescriptor).map((fieldDescriptor) => {
-                if (thisTClass === undefined) thisTClass = entityDescriptor.TClass;
-                return fieldDescriptor.dynamoPropertyName;
+            if (entityDescriptor.isStructureCached === true) continue;
+
+            // Calc signature.
+            const uncachedClassPropertySignatures: string[] = [];
+            if (entityDescriptor.hash) {
+                uncachedClassPropertySignatures.push(entityDescriptor.hash.dynamoPropertyName);
+            }
+            if (entityDescriptor.range) {
+                uncachedClassPropertySignatures.push(entityDescriptor.range.dynamoPropertyName);
+            }
+            entityDescriptor.attrs?.forEach((attr) => {
+                uncachedClassPropertySignatures.push(attr.dynamoPropertyName);
             });
 
-            if (entryPropertyNames.length !== propertyNames.length) continue;
-            entryPropertyNames.sort();
+            // Normalize.
+            uncachedClassPropertySignatures.sort();
+            const uncachedClassSignature: string = uncachedClassPropertySignatures.join(";");
 
-            let isMatch: boolean = true;
-            for (let i = 0; i < entryPropertyNames.length; i++) {
-                if (entryPropertyNames[i] !== propertyNames[i]) {
-                    isMatch = false;
-                    break;
+            // Conflict check.
+            const conflictTClass = this.getTClassByDynamoCache.get(uncachedClassSignature);
+            if (conflictTClass !== undefined) {
+                if (entityDescriptor.TClass) {
+                    throw new Error(
+                        `Entity structure conflict. -> [${conflictTClass.name}, ${entityDescriptor.TClass.name}]`
+                    );
+                } else {
+                    throw new Error(
+                        `Entity structure conflict. but cannot get detail error information. -> [${conflictTClass.name}, ???] maybe @DynamoEntity is missing on somewhere.`
+                    );
                 }
             }
-            if (isMatch) {
-                foundTClass.push(thisTClass);
+
+            // Caching.
+            if (entityDescriptor.TClass) {
+                this.getTClassByDynamoCache.set(uncachedClassSignature, entityDescriptor.TClass);
+                entityDescriptor.isStructureCached = true;
+            } else {
+                throw new Error(
+                    `Cahing on getTClassByDynamoCache is failed. maybe @DynamoEntity is missing on somewhere.`
+                );
             }
         }
 
-        // Check validation.
-        if (foundTClass.length == 0) {
-            throw new Error(`No such table.`);
-        } else if (foundTClass.length >= 2) {
-            throw new Error(`Entity Structure Conflict. [${foundTClass.map((f) => f.constructor.name)}]`);
+        // Retry, find from cache.
+        targetTClass = this.getTClassByDynamoCache.get(targetSignature);
+        if (targetSignature !== undefined) return targetTClass;
+        else {
+            throw new Error(`No such structure. [${targetPropertySignatures}]`);
         }
-
-        // Return constructable object.
-        // It it new-keyword-usable object.
-        return foundTClass[0];
     }
 
     // Gets the list of all fields in a given table.
