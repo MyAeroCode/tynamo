@@ -3,7 +3,7 @@ import chai from "chai";
 import { strictEqual, deepEqual, deepStrictEqual } from "assert";
 import { DataType } from "../type";
 
-describe("[#09] error-04", () => {
+describe("[#10] complex-01", () => {
     @DynamoEntity
     class ComplexData {
         @DynamoProperty(PropertyType.hash)
@@ -56,7 +56,7 @@ describe("[#09] error-04", () => {
         });
     });
 
-    it("complex formation.", () => {
+    it("complex deformation.", () => {
         deepStrictEqual(entity, DynamoFormation.deformation(dynamoItem));
     });
 });
