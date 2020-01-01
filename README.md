@@ -20,9 +20,7 @@ class Cat {
 const badCat = new Cat(666, "garfield");
 const dynamoItem: Item = TynamoFormation.formation(badCat);
 ```
-It will be formationed as below,
-
-and this can be used as a parameter that requires `AttributeMap`.
+It will be formationed as below, and this can be used as a parameter that requires `AttributeMap`.
 ```json
 {
     "id": {
@@ -66,11 +64,7 @@ class Cat {
 ```
 
 #### Entity conflict
-In some cases, the two entity of Signature may be the same. This is called `confliction`. 
-
-If confliction occurs, the deformation is not performed normally and an error occurs.
-
-The following information is used to evaluate Singature:
+In some cases, the two entity of Signature may be the same. This is called `confliction`.  If confliction occurs, the deformation is not performed normally and an error occurs. The following information is used to evaluate Singature:
 + Dynamo property name
 + ~~Dynamo property type~~  (todo)
 + ~~Dynamo property data type~~  (todo)
@@ -94,8 +88,7 @@ class Human {
     name!: string;
 }
 ```
-Because the above two Entities have the same Signature,
-When trying to deformation, the following error occurs:
+Because the above two Entities have the same Signature, When trying to deformation, the following error occurs:
 ```
 Error: Entity structure conflict. -> [Cat, Human]
     at MetaData.getTClassByDynamo
