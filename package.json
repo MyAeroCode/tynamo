@@ -44,5 +44,8 @@
         "url": "https://github.com/MyAeroCode/tynamo/issues"
     },
     "homepage": "https://github.com/MyAeroCode/tynamo#readme",
-    "description": "ORM based dynamo entity mapper."
+    "description": "ORM based dynamo entity mapper.",
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com/"
+    }
 }
