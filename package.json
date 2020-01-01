@@ -32,11 +32,11 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/MyAeroCode/dynamo-formation.git"
+        "url": "git+https://github.com/MyAeroCode/tynamo.git"
     },
     "bugs": {
-        "url": "https://github.com/MyAeroCode/dynamo-formation/issues"
+        "url": "https://github.com/MyAeroCode/tynamo/issues"
     },
-    "homepage": "https://github.com/MyAeroCode/dynamo-formation#readme",
-    "description": ""
+    "homepage": "https://github.com/MyAeroCode/tynamo#readme",
+    "description": "ORM based dynamo entity mapper."
 }
