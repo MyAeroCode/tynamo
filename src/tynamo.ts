@@ -78,7 +78,7 @@ class TynamoFormation {
     //
     formation<TSource>(source: TSource | undefined, formationType: FormationMask = FormationMask.Full): Item {
         if (source === undefined || source === null) {
-            throw new Error(`Empty object is not allowd.`);
+            throw new Error(`Empty object is not allowed`);
         }
 
         const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByHolder(source);
@@ -109,40 +109,48 @@ class TynamoFormation {
             };
         }
 
-        // deserializer
-        const property = fetchFromChunkOrValue<any>(propertyDescriptor.deserializer, {
+        // Deserialize dynamoProperty.
+        const deserialized: Item | any = fetchFromChunkOrValue<any>(propertyDescriptor.deserializer, {
             dynamo: parent,
             propertyDescriptor
         });
 
-        if (property.S) return resolve(String(property.S));
-        if (property.N) return resolve(Number(property.N));
-        if (property.B) return resolve(String(property.B));
-        if (property.SS) return resolve(property.SS as string[]);
-        if (property.NS) return resolve((property.NS as string[]).map((nstr) => Number(nstr)));
-        if (property.BS) return resolve(property.BS as string[]);
-        if (property.L) return resolve((property.L as any[]).map((val) => this.deformation(val)));
-        if (property.M) return resolve(this.deformation(property.M));
-        if (property.BOOL) return resolve(property.BOOL as boolean);
-        if (property.NULL) return resolve(undefined);
-        return property;
+        // If it is, Item.
+        if (deserialized.S) return resolve(String(deserialized.S));
+        if (deserialized.N) return resolve(Number(deserialized.N));
+        if (deserialized.B) return resolve(String(deserialized.B));
+        if (deserialized.SS) return resolve(deserialized.SS as string[]);
+        if (deserialized.NS) return resolve((deserialized.NS as string[]).map((nstr) => Number(nstr)));
+        if (deserialized.BS) return resolve(deserialized.BS as string[]);
+        if (deserialized.L) return resolve((deserialized.L as any[]).map((val) => this.deformation(val)));
+        if (deserialized.M) return resolve(this.deformation(deserialized.M));
+        if (deserialized.BOOL) return resolve(deserialized.BOOL as boolean);
+        if (deserialized.NULL) return resolve(undefined);
+
+        // If it is, scalar or object.
+        return deserialized;
     }
 
     // Convert dynamoItem to sourceObject.
     //
-    deformation(dynamo: Item, TClass: any = MetaData.getTClassByDynamo(dynamo)): any {
+    deformation(dynamo: Item, TClass: any = MetaData.getTClassByDynamoItem(dynamo)): any {
+        // Check if, object is empty.
+        if (dynamo === undefined) {
+            throw new Error(`Empty object is not allowed`);
+        }
+
         // Validation check.
         // Is it registered in the metadata?
         const holder = new TClass();
         const entityDescriptor: EntityDescriptor<any> = MetaData.getEntityDescriptorByHolder(holder);
 
         // Gets all field descriptor to create the Object.
-        // Then deserialize and merge all fields.
         const propertyDescriptors: PropertyDescriptor<any>[] = [];
         if (entityDescriptor.hash) propertyDescriptors.push(entityDescriptor.hash);
         if (entityDescriptor.range) propertyDescriptors.push(entityDescriptor.range);
         if (entityDescriptor.attrs) propertyDescriptors.push(...entityDescriptor.attrs.values());
 
+        // Then deformation and merge all fields.
         for (const propertyDescriptor of propertyDescriptors) {
             const sourceProperty = this.deformationProperty(dynamo, propertyDescriptor);
             Object.assign(holder, sourceProperty);

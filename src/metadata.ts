@@ -11,32 +11,35 @@ class MetaData {
         // Validation check.
         // Is it registered entity in the metadata?
         const entityDescriptor: EntityDescriptor<any> | undefined = this.meta.get(propertyDescriptor.TClassName);
-        if (entityDescriptor == undefined) {
+        if (entityDescriptor === undefined) {
             throw new Error(`Unregistered class [${propertyDescriptor.TClassName}]`);
         }
 
-        // Validation check.
-        // KeyType is must non-nullable.
-        if (
-            (propertyDescriptor.dynamoPropertyType == PropertyType.hash ||
-                propertyDescriptor.dynamoPropertyType == PropertyType.range) &&
-            propertyDescriptor.nullable
-        ) {
-            throw new Error(
-                `KeyType is must non-nullable. -> [${propertyDescriptor.TClassName}.${propertyDescriptor.sourcePropertyName}]`
-            );
-        }
-
         // Simplify variable name.
-        const thisPropertyName: string = propertyDescriptor.dynamoPropertyName;
-        const thisPropertyType: PropertyType = propertyDescriptor.dynamoPropertyType;
+        const thisDynamoPropertyName: string = propertyDescriptor.dynamoPropertyName;
+        const thisDynamoPropertyType: PropertyType = propertyDescriptor.dynamoPropertyType;
+        const thisTClassName: string = propertyDescriptor.TClassName;
         const HASH: PropertyDescriptor<TSource> | undefined = entityDescriptor.hash;
         const RANGE: PropertyDescriptor<TSource> | undefined = entityDescriptor.range;
         const ATTRS: Map<string, PropertyDescriptor<TSource>> | undefined = entityDescriptor.attrs;
 
+        // Validation check.
+        // KeyType is must non-nullable.
+        if (
+            (thisDynamoPropertyType === PropertyType.hash || thisDynamoPropertyType === PropertyType.range) &&
+            propertyDescriptor.nullable
+        ) {
+            throw new Error(
+                `KeyType is must non-nullable. -> [${thisTClassName}.${propertyDescriptor.sourcePropertyName}]`
+            );
+        }
+
         // Test for KeyType.
-        if ((thisPropertyType === PropertyType.hash && HASH) || (thisPropertyType === PropertyType.range && RANGE)) {
-            throw new Error(`Duplicate ${thisPropertyType} Key of [${propertyDescriptor.TClassName}].`);
+        if (
+            (thisDynamoPropertyType === PropertyType.hash && HASH) ||
+            (thisDynamoPropertyType === PropertyType.range && RANGE)
+        ) {
+            throw new Error(`Duplicate ${thisDynamoPropertyType} Key of [${thisTClassName}].`);
         }
 
         // Test for DynamoPropertyName.
@@ -44,8 +47,8 @@ class MetaData {
         if (HASH) dynamoPropertyNameSet.add(HASH.dynamoPropertyName);
         if (RANGE) dynamoPropertyNameSet.add(RANGE.dynamoPropertyName);
         ATTRS?.forEach((attr) => dynamoPropertyNameSet.add(attr.dynamoPropertyName));
-        if (dynamoPropertyNameSet.has(thisPropertyName)) {
-            throw new Error(`Duplicate DynamoPropertyName of ${thisPropertyType}. -> ${thisPropertyName}`);
+        if (dynamoPropertyNameSet.has(thisDynamoPropertyName)) {
+            throw new Error(`Duplicate DynamoPropertyName of ${thisDynamoPropertyType}. -> ${thisDynamoPropertyName}`);
         }
     }
 
@@ -55,11 +58,13 @@ class MetaData {
     public registEntity(TClass: any) {
         let entityDescriptor: EntityDescriptor<any> | undefined = this.meta.get(TClass.name);
         if (entityDescriptor === undefined) {
+            // If this is the first time, generate meta data.
             this.meta.set(TClass.name, {
                 TClass: TClass,
                 attrs: new Map<string, PropertyDescriptor<any>>()
             });
         } else {
+            // If not, update meta data.
             entityDescriptor.TClass = TClass;
         }
     }
@@ -67,9 +72,8 @@ class MetaData {
     // Insert one Property Descriptor.
     // It can be merged if it does not conflict.
     //
-    public registPropertyDescriptor<TSource>(propertyDescriptor: PropertyDescriptor<TSource>) {
-        // Validation check.
-        // Is it registered entity in the metadata?
+    public registProperty<TSource>(propertyDescriptor: PropertyDescriptor<TSource>) {
+        // If this is the first time, generate meta data.
         let entityDescriptor: EntityDescriptor<any> | undefined = this.meta.get(propertyDescriptor.TClassName);
         if (entityDescriptor == undefined) {
             entityDescriptor = {
@@ -82,13 +86,22 @@ class MetaData {
         // then insert them in the correct place.
         this.propertyConflictTest(propertyDescriptor);
 
-        let thisFieldType: PropertyType = propertyDescriptor.dynamoPropertyType;
-        if (thisFieldType == PropertyType.hash) {
-            entityDescriptor.hash = propertyDescriptor;
-        } else if (thisFieldType == PropertyType.range) {
-            entityDescriptor.range = propertyDescriptor;
-        } else if (thisFieldType == PropertyType.attr) {
-            entityDescriptor.attrs!!.set(propertyDescriptor.dynamoPropertyName, propertyDescriptor);
+        const thisFieldType: PropertyType = propertyDescriptor.dynamoPropertyType;
+        switch (thisFieldType) {
+            case PropertyType.hash:
+                entityDescriptor.hash = propertyDescriptor;
+                break;
+
+            case PropertyType.range:
+                entityDescriptor.range = propertyDescriptor;
+                break;
+
+            case PropertyType.attr:
+                entityDescriptor.attrs!!.set(propertyDescriptor.dynamoPropertyName, propertyDescriptor);
+                break;
+
+            default:
+                throw new Error(`No such property type [${thisFieldType}]`);
         }
     }
 
@@ -102,7 +115,7 @@ class MetaData {
             throw new Error(`Unregistered class [${object.constructor.name}]`);
         }
         if (entityDescriptor.TClass === undefined) {
-            throw new Error(`No metadata for ${object.constructor.name}. Make sure @DynamoEntity is append correclty.`);
+            throw new Error(`No metadata for ${object.constructor.name}. Make sure @DynamoEntity is append correctly.`);
         }
         if (!entityDescriptor.hash) {
             throw new Error(`No HashKey in [${object.constructor.name}]. HashKey is required.`);
@@ -116,7 +129,12 @@ class MetaData {
     // @TODO    Currently, there is only PropertyName in the signature.
     //          Put PropertyDataType in signature in the near future.
     //
-    public getTClassByDynamo(dynamo: Item): any {
+    public getTClassByDynamoItem(dynamo: Item): any {
+        // Check if, object is empty.
+        if (dynamo === undefined) {
+            throw new Error(`Empty object is not allowed`);
+        }
+
         // Collect all signature of dynamo properties.
         const targetPropertySignatures: string[] = [];
         for (const dynamoPropertyName in dynamo) {
