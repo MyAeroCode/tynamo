@@ -4,12 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
-const decorator_1 = require("./decorator");
-exports.DynamoProperty = decorator_1.DynamoProperty;
-exports.DynamoEntity = decorator_1.DynamoEntity;
-const tynamo_1 = __importDefault(require("./tynamo"));
+const dynamo_property_1 = require("./decorator/dynamo-property");
+exports.DynamoProperty = dynamo_property_1.DynamoProperty;
+const dynamo_entity_1 = require("./decorator/dynamo-entity");
+exports.DynamoEntity = dynamo_entity_1.DynamoEntity;
+const tynamo_1 = __importDefault(require("./core/tynamo"));
 exports.TynamoFormation = tynamo_1.default;
-const metadata_1 = __importDefault(require("./metadata"));
+const metadata_1 = __importDefault(require("./core/metadata"));
 exports.MetaData = metadata_1.default;
 const type_1 = require("./type");
 exports.PropertyDecoratorArgs = type_1.PropertyDecoratorArgs;

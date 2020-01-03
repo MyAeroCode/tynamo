@@ -83,13 +83,38 @@ export class EntityDescriptor<TSource> {
     TClass?: any;
     hash?: PropertyDescriptor<TSource>;
     range?: PropertyDescriptor<TSource>;
-    attrs?: Map<string, PropertyDescriptor<TSource>>;
+    attrs?: Map<string, PropertyDescriptor<TSource>>; // Key is DynamoPropertyName
     isStructureCached?: boolean;
 }
+
 export enum FormationMask {
     HashKey = 0b001,
     RangeKey = 0b010,
     Body = 0b100,
     KeyOnly = 0b011,
     Full = 0b111
+}
+
+// Comparison Operator used in DynamoDB.
+// @see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Condition.html
+export enum ComparisonOperator {
+    EQ = "EQ",
+    NE = "NE",
+    LE = "LE",
+    LT = "LT",
+    GE = "GE",
+    GT = "GT",
+    NOT_NULL = "NOT_NULL",
+    NULL = "NULL",
+    CONTAINS = "CONTAINS",
+    NOT_CONTAINS = "NOT_CONTAINS",
+    BEGINS_WITH = "BEGINS_WITH",
+    IN = "IN",
+    BETWEEN = "BETWEEN"
+}
+
+export interface ScanFilterAddArgs<TSource> {
+    targetSourcePropertyName: keyof TSource;
+    comparisonOperator: ComparisonOperator;
+    data: any[];
 }

@@ -1,12 +1,6 @@
-import { PropertyDecoratorArgs, PropertyDescriptor, PropertyType, DataType } from "./type";
-import { defaultSerializer, defaultDeserializer } from "./utils";
-import MetaData from "./metadata";
-
-// Class Decorator :
-//      Add this class to metadata.
-export function DynamoEntity(TClass: any) {
-    MetaData.registEntity(TClass);
-}
+import { PropertyDecoratorArgs, PropertyDescriptor, PropertyType, DataType } from "../type";
+import { defaultSerializer, defaultDeserializer } from "../core/utils";
+import MetaData from "../core/metadata";
 
 // Class Member Decorator:
 //      Add this property to metadata.

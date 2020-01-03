@@ -56,4 +56,22 @@ var FormationMask;
     FormationMask[FormationMask["KeyOnly"] = 3] = "KeyOnly";
     FormationMask[FormationMask["Full"] = 7] = "Full";
 })(FormationMask = exports.FormationMask || (exports.FormationMask = {}));
+// Comparison Operator used in DynamoDB.
+// @see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Condition.html
+var ComparisonOperator;
+(function (ComparisonOperator) {
+    ComparisonOperator["EQ"] = "EQ";
+    ComparisonOperator["NE"] = "NE";
+    ComparisonOperator["LE"] = "LE";
+    ComparisonOperator["LT"] = "LT";
+    ComparisonOperator["GE"] = "GE";
+    ComparisonOperator["GT"] = "GT";
+    ComparisonOperator["NOT_NULL"] = "NOT_NULL";
+    ComparisonOperator["NULL"] = "NULL";
+    ComparisonOperator["CONTAINS"] = "CONTAINS";
+    ComparisonOperator["NOT_CONTAINS"] = "NOT_CONTAINS";
+    ComparisonOperator["BEGINS_WITH"] = "BEGINS_WITH";
+    ComparisonOperator["IN"] = "IN";
+    ComparisonOperator["BETWEEN"] = "BETWEEN";
+})(ComparisonOperator = exports.ComparisonOperator || (exports.ComparisonOperator = {}));
 //# sourceMappingURL=type.js.map

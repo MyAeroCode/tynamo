@@ -65,4 +65,24 @@ export declare enum FormationMask {
     KeyOnly = 3,
     Full = 7
 }
+export declare enum ComparisonOperator {
+    EQ = "EQ",
+    NE = "NE",
+    LE = "LE",
+    LT = "LT",
+    GE = "GE",
+    GT = "GT",
+    NOT_NULL = "NOT_NULL",
+    NULL = "NULL",
+    CONTAINS = "CONTAINS",
+    NOT_CONTAINS = "NOT_CONTAINS",
+    BEGINS_WITH = "BEGINS_WITH",
+    IN = "IN",
+    BETWEEN = "BETWEEN"
+}
+export interface ScanFilterAddArgs<TSource> {
+    targetSourcePropertyName: keyof TSource;
+    comparisonOperator: ComparisonOperator;
+    data: any[];
+}
 //# sourceMappingURL=type.d.ts.map

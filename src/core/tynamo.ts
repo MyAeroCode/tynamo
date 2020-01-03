@@ -1,18 +1,59 @@
-import { FormationMask, Item, PropertyDescriptor, DataType, EntityDescriptor } from "./type";
+import { FormationMask, Item, PropertyDescriptor, DataType, EntityDescriptor } from "../type";
 import MetaData from "./metadata";
 import { fetchFromChunkOrValue } from "./utils";
+import { AttributeValue } from "aws-sdk/clients/dynamodb";
 
 // Performs the interconversion between DynamoItem and the object.
 //
 class TynamoFormation {
     // Convert sourceScalar to dynamoScalar.
     //
-    formationScalar(value: number | string | boolean): string | boolean {
+    formationScalar(value: any, dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL): AttributeValue {
         if (value === undefined || value === null || value === "") throw new Error(`'${value}' is not allowed.`);
-        if (value.constructor === Number) return (value as number).toString();
-        if (value.constructor === String) return value as string;
-        if (value.constructor === Boolean) return value as boolean;
-        throw new Error(`'${value}' is not scalar.`);
+
+        switch (dataType) {
+            case DataType.S:
+            case DataType.N:
+            case DataType.B: {
+                return {
+                    [dataType]: value.toString()
+                };
+            }
+
+            case DataType.BOOL: {
+                return {
+                    [dataType]: value
+                };
+            }
+        }
+    }
+
+    // Convert sourceList to dynamoList.
+    //
+    formationList(array: any[], dataType: DataType.NS | DataType.SS | DataType.BS | DataType.L): AttributeValue {
+        switch (dataType) {
+            case DataType.NS:
+            case DataType.SS:
+            case DataType.BS: {
+                return {
+                    [dataType]: array.map((v) => v.toString())
+                };
+            }
+
+            case DataType.L: {
+                return {
+                    [dataType]: array.map((v) => this.formation(v))
+                };
+            }
+        }
+    }
+
+    // Conver source to dynamoMap.
+    //
+    formationMap(source: any): AttributeValue {
+        return {
+            M: this.formation(source)
+        };
     }
 
     // Convert sourceProperty to dynamoProperty.
@@ -33,50 +74,47 @@ class TynamoFormation {
             else throw new Error(`Non-nullable property sholud not NULL or undefined`);
         }
 
-        function resolve(value: any): Item {
+        function resolve(value: AttributeValue): Item {
             return {
-                [dynamoPropertyName]: {
-                    [realDataType]: value
-                }
+                [dynamoPropertyName]: value
             };
         }
+
         switch (realDataType) {
             case DataType.S:
             case DataType.N:
             case DataType.B:
-            case DataType.BOOL:
-                return resolve(this.formationScalar(source));
+            case DataType.BOOL: {
+                return resolve(this.formationScalar(source, realDataType));
+            }
 
             case DataType.SS:
             case DataType.NS:
             case DataType.BS:
-                return resolve((source as any[]).map((v) => this.formationScalar(v)));
+            case DataType.L: {
+                return resolve(this.formationList(source, realDataType));
+            }
 
-            case DataType.L:
-                return resolve(
-                    (source as any[]).map((v) => {
-                        try {
-                            return this.formation(v);
-                        } catch (e) {
-                            throw new Error(`DataType.L should not contain scalar values.`);
-                        }
-                    })
-                );
+            case DataType.M: {
+                return resolve(this.formationMap(source));
+            }
 
-            case DataType.M:
-                return resolve(this.formation(source));
+            case DataType.NULL: {
+                return resolve({
+                    NULL: true
+                });
+            }
 
-            case DataType.NULL:
-                return resolve(true);
-
-            default:
+            default: {
                 throw new Error(`Can not detect DataType.`);
+            }
         }
     }
 
     // Convert sourceObject to dynamoItem.
     //
     formation<TSource>(source: TSource | undefined, formationType: FormationMask = FormationMask.Full): Item {
+        // Check if, source is empty.
         if (source === undefined || source === null) {
             throw new Error(`Empty object is not allowed`);
         }
@@ -99,6 +137,46 @@ class TynamoFormation {
         return dynamo;
     }
 
+    // Convert dynamoScalar to sourceScalar.
+    //
+    deformationScalar(value: AttributeValue, dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL): any {
+        if (value === undefined || value === undefined) throw new Error(`'${value}' is not allowed.`);
+        switch (dataType) {
+            case DataType.S:
+            case DataType.B:
+            case DataType.BOOL:
+                return value[dataType];
+
+            case DataType.N:
+                return Number(value[dataType]);
+        }
+    }
+
+    // Convert dynamoList to sourceList.
+    //
+    deformationList(array: AttributeValue, dataType: DataType.NS | DataType.SS | DataType.BS | DataType.L): any[] {
+        switch (dataType) {
+            case DataType.SS:
+            case DataType.BS: {
+                return (array[dataType] as string[]).map((v) => String(v));
+            }
+
+            case DataType.NS: {
+                return (array[dataType] as string[]).map((v) => Number(v));
+            }
+
+            case DataType.L: {
+                return (array[dataType] as any[]).map((v) => this.deformation(v));
+            }
+        }
+    }
+
+    // Convert dynamoMap to source.
+    //
+    deformationMap(dynamo: AttributeValue): any {
+        return this.deformation(dynamo.M!!);
+    }
+
     // Convert dynamoProperty to sourceProperty.
     //
     deformationProperty(parent: Item, propertyDescriptor: PropertyDescriptor<any>): any {
@@ -115,19 +193,17 @@ class TynamoFormation {
             propertyDescriptor
         });
 
-        // If it is, Item.
-        if (deserialized.S) return resolve(String(deserialized.S));
-        if (deserialized.N) return resolve(Number(deserialized.N));
-        if (deserialized.B) return resolve(String(deserialized.B));
-        if (deserialized.SS) return resolve(deserialized.SS as string[]);
-        if (deserialized.NS) return resolve((deserialized.NS as string[]).map((nstr) => Number(nstr)));
-        if (deserialized.BS) return resolve(deserialized.BS as string[]);
-        if (deserialized.L) return resolve((deserialized.L as any[]).map((val) => this.deformation(val)));
-        if (deserialized.M) return resolve(this.deformation(deserialized.M));
-        if (deserialized.BOOL) return resolve(deserialized.BOOL as boolean);
+        // Return deformationed.
+        if (deserialized.S) return resolve(this.deformationScalar(deserialized, DataType.S));
+        if (deserialized.N) return resolve(this.deformationScalar(deserialized, DataType.N));
+        if (deserialized.B) return resolve(this.deformationScalar(deserialized, DataType.B));
+        if (deserialized.SS) return resolve(this.deformationList(deserialized, DataType.SS));
+        if (deserialized.NS) return resolve(this.deformationList(deserialized, DataType.NS));
+        if (deserialized.BS) return resolve(this.deformationList(deserialized, DataType.BS));
+        if (deserialized.L) return resolve(this.deformationList(deserialized, DataType.L));
+        if (deserialized.M) return resolve(this.deformationMap(deserialized));
+        if (deserialized.BOOL) return resolve(this.deformationScalar(deserialized, DataType.BOOL));
         if (deserialized.NULL) return resolve(undefined);
-
-        // If it is, scalar or object.
         return deserialized;
     }
 

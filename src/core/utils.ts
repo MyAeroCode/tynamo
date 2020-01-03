@@ -1,4 +1,4 @@
-import { ChunkOrValue, Serializer, SerializerArg, Deserializer, DeserializerArg, DataType, Item } from "./type";
+import { ChunkOrValue, Serializer, SerializerArg, Deserializer, DeserializerArg, DataType, Item } from "../type";
 
 // Default serializer.
 export const defaultSerializer: Serializer<any> = (arg: SerializerArg<any>) => {
