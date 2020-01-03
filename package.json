@@ -1,6 +1,6 @@
 {
     "name": "tynamo",
-    "version": "1.4.4",
+    "version": "1.4.41",
     "main": "out/index.js",
     "types": "out/index.d.ts",
     "scripts": {
