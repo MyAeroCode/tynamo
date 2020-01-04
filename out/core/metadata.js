@@ -24,17 +24,17 @@ class MetaData {
             else if (predictSourceDataType === Boolean)
                 args.dataType = type_1.DataType.BOOL;
             else
-                throw new Error();
+                throw new Error(`please specify dataType of [${TClassConstructor.name}.${sourcePropertyName}]`);
         }
         // Check.
         // DataType.L must be specify sourceDataType.
         if (args.dataType === type_1.DataType.L && args.sourceDataType === undefined) {
-            throw new Error();
+            throw new Error(`DataType.L[${TClassConstructor.name}.${sourcePropertyName}] is must specify sourceDataType`);
         }
         // Check.
         // Key is not nullable.
         if (args.keyType !== type_1.KeyType.attr && args.nullable === true) {
-            throw new Error();
+            throw new Error(`${args.keyType}[${TClassConstructor.name}.${sourcePropertyName}] is should non-nullable`);
         }
         const propertyDescriptor = {
             nullable: args.nullable === true,
@@ -74,9 +74,9 @@ class MetaData {
         const propertyType = propertyDescriptor.dynamoKeyType;
         // test property key type is duplicated.
         if (hash && propertyType === type_1.KeyType.hash)
-            throw new Error();
+            throw new Error(`hash key duplicated. [${TClassConstructor.name}.${propertyDescriptor.sourcePropertyName}] and [${TClassConstructor.name}.${hash.sourcePropertyName}]`);
         if (sort && propertyType === type_1.KeyType.sort)
-            throw new Error();
+            throw new Error(`sort key duplicated. [${TClassConstructor.name}.${propertyDescriptor.sourcePropertyName}] and [${TClassConstructor.name}.${sort.sourcePropertyName}]`);
         // test property name is duplicated.
         const set = new Set();
         if (hash)
@@ -85,7 +85,7 @@ class MetaData {
             set.add(sort.dynamoPropertyName);
         attr.forEach((property) => set.add(property.dynamoPropertyName));
         if (set.has(propertyDescriptor.dynamoPropertyName))
-            throw new Error();
+            throw new Error(`property name duplicated. [${TClassConstructor.name}.${propertyDescriptor.sourcePropertyName}]`);
     }
     // Gets the Entity Descriptor associated with a given object.
     // Instead of the class itself, pass over the holder.
@@ -93,9 +93,9 @@ class MetaData {
     //
     getEntityDescriptorByConstructor(TClassConstructor) {
         if (Reflect.getMetadata(key_1.MetaDataKey.TClass, TClassConstructor) === undefined)
-            throw new Error();
+            throw new Error(`Can not find ClassInfo. Maybe @DynamoEntity is missing on [${TClassConstructor.name}]`);
         if (Reflect.getMetadata(key_1.MetaDataKey.Hash, TClassConstructor) === undefined)
-            throw new Error();
+            throw new Error(`No hashKey in [${TClassConstructor.name}]`);
         return {
             TClass: Reflect.getMetadata(key_1.MetaDataKey.TClass, TClassConstructor),
             hash: Reflect.getMetadata(key_1.MetaDataKey.Hash, TClassConstructor),
