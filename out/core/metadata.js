@@ -1,212 +1,107 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const type_1 = require("../type");
+const key_1 = require("../key");
+const utils_1 = require("./utils");
 class MetaData {
-    constructor() {
-        this.meta = new Map();
-        this.getTClassByDynamoCache = new Map();
-    }
-    // Examine for conflicting property.
-    // Test if the duplicate keyType or propertyName.
-    //
-    propertyConflictTest(propertyDescriptor) {
-        var _a;
-        // Validation check.
-        // Is it registered entity in the metadata?
-        const entityDescriptor = this.meta.get(propertyDescriptor.TClassName);
-        if (entityDescriptor === undefined) {
-            throw new Error(`Unregistered class [${propertyDescriptor.TClassName}]`);
-        }
-        // Simplify variable name.
-        const thisDynamoPropertyName = propertyDescriptor.dynamoPropertyName;
-        const thisDynamoPropertyType = propertyDescriptor.dynamoPropertyType;
-        const thisTClassName = propertyDescriptor.TClassName;
-        const HASH = entityDescriptor.hash;
-        const RANGE = entityDescriptor.range;
-        const ATTRS = entityDescriptor.attrs;
-        // Validation check.
-        // KeyType is must non-nullable.
-        if ((thisDynamoPropertyType === type_1.PropertyType.hash || thisDynamoPropertyType === type_1.PropertyType.range) &&
-            propertyDescriptor.nullable) {
-            throw new Error(`KeyType is must non-nullable. -> [${thisTClassName}.${propertyDescriptor.sourcePropertyName}]`);
-        }
-        // Test for KeyType.
-        if ((thisDynamoPropertyType === type_1.PropertyType.hash && HASH) ||
-            (thisDynamoPropertyType === type_1.PropertyType.range && RANGE)) {
-            throw new Error(`Duplicate ${thisDynamoPropertyType} Key of [${thisTClassName}].`);
-        }
-        // Test for DynamoPropertyName.
-        const dynamoPropertyNameSet = new Set();
-        if (HASH)
-            dynamoPropertyNameSet.add(HASH.dynamoPropertyName);
-        if (RANGE)
-            dynamoPropertyNameSet.add(RANGE.dynamoPropertyName);
-        (_a = ATTRS) === null || _a === void 0 ? void 0 : _a.forEach((attr) => dynamoPropertyNameSet.add(attr.dynamoPropertyName));
-        if (dynamoPropertyNameSet.has(thisDynamoPropertyName)) {
-            throw new Error(`Duplicate DynamoPropertyName of ${thisDynamoPropertyType}. -> ${thisDynamoPropertyName}`);
-        }
-    }
     // Attch TClass(constructable) into EntityDescriptor.
     // It is for create a new object through TClass.
     //
     registEntity(TClass) {
-        let entityDescriptor = this.meta.get(TClass.name);
-        if (entityDescriptor === undefined) {
-            // If this is the first time, generate meta data.
-            this.meta.set(TClass.name, {
-                TClass: TClass,
-                attrs: new Map()
-            });
-        }
-        else {
-            // If not, update meta data.
-            entityDescriptor.TClass = TClass;
-        }
+        const TClassConstructor = new TClass().constructor;
+        Reflect.defineMetadata(key_1.MetaDataKey.TClass, TClass, TClassConstructor);
     }
     // Insert one Property Descriptor.
     // It can be merged if it does not conflict.
     //
-    registProperty(propertyDescriptor) {
-        // If this is the first time, generate meta data.
-        let entityDescriptor = this.meta.get(propertyDescriptor.TClassName);
-        if (entityDescriptor == undefined) {
-            entityDescriptor = {
-                attrs: new Map()
-            };
-            this.meta.set(propertyDescriptor.TClassName, entityDescriptor);
+    registProperty(TClassConstructor, sourcePropertyName, args) {
+        const predictSourceDataType = Reflect.getMetadata("design:type", new TClassConstructor(), sourcePropertyName);
+        if (args.dataType === undefined) {
+            if (predictSourceDataType === String)
+                args.dataType = type_1.DataType.S;
+            else if (predictSourceDataType === Number)
+                args.dataType = type_1.DataType.N;
+            else if (predictSourceDataType === Boolean)
+                args.dataType = type_1.DataType.BOOL;
+            else
+                throw new Error();
         }
-        // Examine validity and conflict.
-        // then insert them in the correct place.
-        this.propertyConflictTest(propertyDescriptor);
-        const thisFieldType = propertyDescriptor.dynamoPropertyType;
-        switch (thisFieldType) {
-            case type_1.PropertyType.hash:
-                entityDescriptor.hash = propertyDescriptor;
-                break;
-            case type_1.PropertyType.range:
-                entityDescriptor.range = propertyDescriptor;
-                break;
-            case type_1.PropertyType.attr:
-                entityDescriptor.attrs.set(propertyDescriptor.dynamoPropertyName, propertyDescriptor);
-                break;
-            default:
-                throw new Error(`No such property type [${thisFieldType}]`);
+        // Check.
+        // DataType.L must be specify sourceDataType.
+        if (args.dataType === type_1.DataType.L && args.sourceDataType === undefined) {
+            throw new Error();
         }
+        // Check.
+        // Key is not nullable.
+        if (args.keyType !== type_1.KeyType.attr && args.nullable === true) {
+            throw new Error();
+        }
+        const propertyDescriptor = {
+            nullable: args.nullable === true,
+            serializer: args.serializer ? args.serializer : utils_1.defaultSerializer,
+            deserializer: args.deserializer ? args.deserializer : utils_1.defaultDeserializer,
+            sourceDataType: args.sourceDataType ? args.sourceDataType : predictSourceDataType,
+            dynamoDataType: args.dataType,
+            dynamoKeyType: args.keyType,
+            dynamoPropertyName: args.propertyName ? args.propertyName : sourcePropertyName,
+            sourcePropertyName: sourcePropertyName
+        };
+        this.propertyConflictTest(TClassConstructor, propertyDescriptor);
+        //
+        const propertyType = propertyDescriptor.dynamoKeyType;
+        if (propertyType === type_1.KeyType.hash) {
+            Reflect.defineMetadata(key_1.MetaDataKey.Hash, propertyDescriptor, TClassConstructor);
+        }
+        if (propertyType === type_1.KeyType.sort) {
+            Reflect.defineMetadata(key_1.MetaDataKey.Sort, propertyDescriptor, TClassConstructor);
+        }
+        if (propertyType === type_1.KeyType.attr) {
+            const attr = Reflect.getMetadata(key_1.MetaDataKey.Attr, TClassConstructor);
+            attr.push(propertyDescriptor);
+        }
+        Reflect.defineMetadata(key_1.MetaDataKey.PropertyDescriptor, propertyDescriptor, TClassConstructor, sourcePropertyName);
+    }
+    // Examine for conflicting property.
+    // Test if the duplicate keyType or propertyName.
+    //
+    propertyConflictTest(TClassConstructor, propertyDescriptor) {
+        if (Reflect.getMetadata(key_1.MetaDataKey.Attr, TClassConstructor) === undefined) {
+            Reflect.defineMetadata(key_1.MetaDataKey.Attr, [], TClassConstructor);
+        }
+        const hash = Reflect.getMetadata(key_1.MetaDataKey.Hash, TClassConstructor);
+        const sort = Reflect.getMetadata(key_1.MetaDataKey.Sort, TClassConstructor);
+        const attr = Reflect.getMetadata(key_1.MetaDataKey.Attr, TClassConstructor);
+        const propertyType = propertyDescriptor.dynamoKeyType;
+        // test property key type is duplicated.
+        if (hash && propertyType === type_1.KeyType.hash)
+            throw new Error();
+        if (sort && propertyType === type_1.KeyType.sort)
+            throw new Error();
+        // test property name is duplicated.
+        const set = new Set();
+        if (hash)
+            set.add(hash.dynamoPropertyName);
+        if (sort)
+            set.add(sort.dynamoPropertyName);
+        attr.forEach((property) => set.add(property.dynamoPropertyName));
+        if (set.has(propertyDescriptor.dynamoPropertyName))
+            throw new Error();
     }
     // Gets the Entity Descriptor associated with a given object.
     // Instead of the class itself, pass over the holder.
     // e.g) getOf(new Something());
     //
-    getEntityDescriptorByHolder(object) {
-        const entityDescriptor = this.meta.get(object.constructor.name);
-        if (entityDescriptor === undefined) {
-            throw new Error(`Unregistered class [${object.constructor.name}]`);
-        }
-        if (entityDescriptor.TClass === undefined) {
-            throw new Error(`No metadata for ${object.constructor.name}. Make sure @DynamoEntity is append correctly.`);
-        }
-        if (!entityDescriptor.hash) {
-            throw new Error(`No HashKey in [${object.constructor.name}]. HashKey is required.`);
-        }
-        return entityDescriptor;
-    }
-    // Returns a TClass with the same entry structure.
-    // Occur error if there are many such TClass.
-    //
-    // @TODO    Currently, there is only PropertyName in the signature.
-    //          Put PropertyDataType in signature in the near future.
-    //
-    getTClassByDynamoItem(dynamo) {
-        var _a;
-        // Check if, object is empty.
-        if (dynamo === undefined) {
-            throw new Error(`Empty object is not allowed`);
-        }
-        // Collect all signature of dynamo properties.
-        const targetPropertySignatures = [];
-        for (const dynamoPropertyName in dynamo) {
-            // Calc signature.
-            targetPropertySignatures.push(dynamoPropertyName);
-        }
-        targetPropertySignatures.sort();
-        const targetSignature = targetPropertySignatures.join(";");
-        // At first, find from cache.
-        let targetTClass = this.getTClassByDynamoCache.get(targetSignature);
-        if (targetTClass !== undefined)
-            return targetTClass;
-        // If not in the cache, navigate to the uncached TClasses.
-        for (const entityDescriptor of this.meta.values()) {
-            if (entityDescriptor.isStructureCached === true)
-                continue;
-            // Calc signature.
-            const uncachedClassPropertySignatures = [];
-            if (entityDescriptor.hash) {
-                uncachedClassPropertySignatures.push(entityDescriptor.hash.dynamoPropertyName);
-            }
-            if (entityDescriptor.range) {
-                uncachedClassPropertySignatures.push(entityDescriptor.range.dynamoPropertyName);
-            }
-            (_a = entityDescriptor.attrs) === null || _a === void 0 ? void 0 : _a.forEach((attr) => {
-                uncachedClassPropertySignatures.push(attr.dynamoPropertyName);
-            });
-            // Normalize.
-            uncachedClassPropertySignatures.sort();
-            const uncachedClassSignature = uncachedClassPropertySignatures.join(";");
-            // Conflict check.
-            const conflictTClass = this.getTClassByDynamoCache.get(uncachedClassSignature);
-            if (conflictTClass !== undefined) {
-                if (entityDescriptor.TClass) {
-                    throw new Error(`Entity structure conflict. -> [${conflictTClass.name}, ${entityDescriptor.TClass.name}]`);
-                }
-                else {
-                    throw new Error(`Entity structure conflict. but cannot get detail error information. -> [${conflictTClass.name}, ???] maybe @DynamoEntity is missing on somewhere.`);
-                }
-            }
-            // Caching.
-            if (entityDescriptor.TClass) {
-                this.getTClassByDynamoCache.set(uncachedClassSignature, entityDescriptor.TClass);
-                entityDescriptor.isStructureCached = true;
-            }
-            else {
-                throw new Error(`Cahing on getTClassByDynamoCache is failed. maybe @DynamoEntity is missing on somewhere.`);
-            }
-        }
-        // Retry, find from cache.
-        targetTClass = this.getTClassByDynamoCache.get(targetSignature);
-        if (targetSignature !== undefined)
-            return targetTClass;
-        else {
-            throw new Error(`No such structure. [${targetPropertySignatures}]`);
-        }
-    }
-    // Gets the list of all fields in a given table.
-    //
-    getAllPropertiesByEntityDescriptor(entityDescriptor) {
-        const allFields = [];
-        if (entityDescriptor.hash)
-            allFields.push(entityDescriptor.hash);
-        if (entityDescriptor.range)
-            allFields.push(entityDescriptor.range);
-        if (entityDescriptor.attrs)
-            allFields.push(...entityDescriptor.attrs.values());
-        return allFields;
-    }
-    getPropertyDescriptorBySourceAndSourcePropertyName(source, sourcePropertyName) {
-        const entityDescriptor = this.getEntityDescriptorByHolder(source);
-        const HASH = entityDescriptor.hash;
-        const RANGE = entityDescriptor.range;
-        const ATTRS = entityDescriptor.attrs;
-        if (HASH && HASH.sourcePropertyName === sourcePropertyName)
-            return HASH;
-        if (RANGE && RANGE.sourcePropertyName === sourcePropertyName)
-            return RANGE;
-        if (ATTRS) {
-            for (const attr of ATTRS.values()) {
-                if (attr.sourcePropertyName === sourcePropertyName)
-                    return attr;
-            }
-        }
-        throw new Error(`No such mapped property -> [${entityDescriptor.TClass.name}.${sourcePropertyName}]. missing @DynamoProperty?`);
+    getEntityDescriptorByConstructor(TClassConstructor) {
+        if (Reflect.getMetadata(key_1.MetaDataKey.TClass, TClassConstructor) === undefined)
+            throw new Error();
+        if (Reflect.getMetadata(key_1.MetaDataKey.Hash, TClassConstructor) === undefined)
+            throw new Error();
+        return {
+            TClass: Reflect.getMetadata(key_1.MetaDataKey.TClass, TClassConstructor),
+            hash: Reflect.getMetadata(key_1.MetaDataKey.Hash, TClassConstructor),
+            sort: Reflect.getMetadata(key_1.MetaDataKey.Sort, TClassConstructor),
+            attr: Reflect.getMetadata(key_1.MetaDataKey.Attr, TClassConstructor)
+        };
     }
 }
 const metaData = new MetaData();

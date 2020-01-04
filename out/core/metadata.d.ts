@@ -1,14 +1,9 @@
-import { PropertyDescriptor, EntityDescriptor, Item } from "../type";
+import { EntityDescriptor, PropertyDecoratorArgs } from "../type";
 declare class MetaData {
-    private meta;
-    private getTClassByDynamoCache;
-    private propertyConflictTest;
     registEntity(TClass: any): void;
-    registProperty<TSource>(propertyDescriptor: PropertyDescriptor<TSource>): void;
-    getEntityDescriptorByHolder<TSource>(object: any): EntityDescriptor<TSource>;
-    getTClassByDynamoItem(dynamo: Item): any;
-    getAllPropertiesByEntityDescriptor(entityDescriptor: EntityDescriptor<any>): PropertyDescriptor<any>[];
-    getPropertyDescriptorBySourceAndSourcePropertyName<TSource>(source: TSource, sourcePropertyName: keyof TSource): PropertyDescriptor<TSource>;
+    registProperty(TClassConstructor: any, sourcePropertyName: string, args: PropertyDecoratorArgs<any>): void;
+    private propertyConflictTest;
+    getEntityDescriptorByConstructor<TSource>(TClassConstructor: any): EntityDescriptor<TSource>;
 }
 declare const metaData: MetaData;
 export default metaData;

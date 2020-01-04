@@ -7,7 +7,7 @@ import {
     PropertyDecoratorArgs,
     DataType,
     DataTypeResolverArg,
-    PropertyType,
+    KeyType,
     Item,
     FormationMask,
     SerializerArg,
@@ -23,7 +23,7 @@ export {
     TynamoFormation,
     MetaData,
     DataType,
-    PropertyType,
+    KeyType,
     Item,
     FormationMask,
     Serializer,
@@ -33,3 +33,35 @@ export {
     PropertyDecoratorArgs,
     PropertyDescriptor
 };
+
+@DynamoEntity
+class Entity {
+    @DynamoProperty({
+        keyType: KeyType.hash,
+        propertyName: "id",
+        serializer: (arg: SerializerArg<Entity>) => {
+            const source: Entity = arg.source;
+            return [source.x, source.y].join("_");
+        },
+        deserializer: (arg: DeserializerArg): Partial<Entity> => {
+            const token: string[] = arg.dynamo.id.S!!.split("_");
+            return {
+                x: token[0],
+                y: token[1]
+            };
+        }
+    })
+    __id?: string;
+
+    x: string;
+    y: string;
+
+    constructor(x: string, y: string) {
+        this.x = x;
+        this.y = y;
+    }
+}
+const entity = new Entity("Hello", "World!");
+const dynamoItem: Item = TynamoFormation.formation(entity, Entity);
+const r = TynamoFormation.deformation(dynamoItem, Entity);
+console.log(JSON.stringify(r, null, 4));

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const type_1 = require("../type");
 const metadata_1 = __importDefault(require("./metadata"));
 const utils_1 = require("./utils");
+const key_1 = require("../key");
 // Performs the interconversion between DynamoItem and the object.
 //
 class TynamoFormation {
@@ -29,38 +30,34 @@ class TynamoFormation {
             }
         }
     }
+    // Convert sourceScalarList to dynamoScalarList
+    //
+    formationScalarList(array, dataType) {
+        return {
+            [dataType]: array.map((v) => v.toString())
+        };
+    }
     // Convert sourceList to dynamoList.
     //
-    formationList(array, dataType) {
-        switch (dataType) {
-            case type_1.DataType.NS:
-            case type_1.DataType.SS:
-            case type_1.DataType.BS: {
-                return {
-                    [dataType]: array.map((v) => v.toString())
-                };
-            }
-            case type_1.DataType.L: {
-                return {
-                    [dataType]: array.map((v) => this.formation(v))
-                };
-            }
-        }
+    formationList(array, TClass) {
+        return {
+            [type_1.DataType.L]: array.map((v) => this.formation(v, TClass))
+        };
     }
     // Conver source to dynamoMap.
     //
-    formationMap(source) {
+    formationMap(source, TClass) {
         return {
-            M: this.formation(source)
+            M: this.formation(source, TClass)
         };
     }
     // Convert sourceProperty to dynamoProperty.
     //
     formationProperty(parent, propertyDescriptor) {
         const dynamoPropertyName = propertyDescriptor.dynamoPropertyName;
-        let realDataType = propertyDescriptor.dataType;
+        let realDataType = propertyDescriptor.dynamoDataType;
         // custom property serializer check.
-        const source = utils_1.fetchFromChunkOrValue(propertyDescriptor.serializer, {
+        const source = propertyDescriptor.serializer({
             source: parent,
             propertyDescriptor: propertyDescriptor
         });
@@ -85,12 +82,14 @@ class TynamoFormation {
             }
             case type_1.DataType.SS:
             case type_1.DataType.NS:
-            case type_1.DataType.BS:
+            case type_1.DataType.BS: {
+                return resolve(this.formationScalarList(source, realDataType));
+            }
             case type_1.DataType.L: {
-                return resolve(this.formationList(source, realDataType));
+                return resolve(this.formationList(source, propertyDescriptor.sourceDataType));
             }
             case type_1.DataType.M: {
-                return resolve(this.formationMap(source));
+                return resolve(this.formationMap(source, propertyDescriptor.sourceDataType));
             }
             case type_1.DataType.NULL: {
                 return resolve({
@@ -104,16 +103,16 @@ class TynamoFormation {
     }
     // Convert sourceObject to dynamoItem.
     //
-    formation(source, formationType = type_1.FormationMask.Full) {
+    formation(source, RootTClass, formationType = type_1.FormationMask.Full) {
         // Check if, source is empty.
         if (source === undefined || source === null) {
             throw new Error(`Empty object is not allowed`);
         }
-        const entityDescriptor = metadata_1.default.getEntityDescriptorByHolder(source);
+        const entityDescriptor = metadata_1.default.getEntityDescriptorByConstructor(RootTClass);
         const propertyDescriptors = [];
         const HASH = entityDescriptor.hash;
-        const RANGE = entityDescriptor.range;
-        const ATTRS = entityDescriptor.attrs;
+        const RANGE = entityDescriptor.sort;
+        const ATTRS = entityDescriptor.attr;
         if (formationType & type_1.FormationMask.HashKey && HASH)
             propertyDescriptors.push(HASH);
         if (formationType & type_1.FormationMask.RangeKey && RANGE)
@@ -141,9 +140,9 @@ class TynamoFormation {
                 return Number(value[dataType]);
         }
     }
-    // Convert dynamoList to sourceList.
+    // Convert dynamoScalarList to sourceScalarList.
     //
-    deformationList(array, dataType) {
+    deformationScalarList(array, dataType) {
         switch (dataType) {
             case type_1.DataType.SS:
             case type_1.DataType.BS: {
@@ -152,15 +151,17 @@ class TynamoFormation {
             case type_1.DataType.NS: {
                 return array[dataType].map((v) => Number(v));
             }
-            case type_1.DataType.L: {
-                return array[dataType].map((v) => this.deformation(v));
-            }
         }
+    }
+    // Convert dynamoList to sourceList.
+    //
+    deformationList(array, TClass) {
+        return array[type_1.DataType.L].map((v) => this.deformation(v, TClass));
     }
     // Convert dynamoMap to source.
     //
-    deformationMap(dynamo) {
-        return this.deformation(dynamo.M);
+    deformationMap(dynamo, TClass) {
+        return this.deformation(dynamo.M, TClass);
     }
     // Convert dynamoProperty to sourceProperty.
     //
@@ -184,15 +185,17 @@ class TynamoFormation {
         if (deserialized.B)
             return resolve(this.deformationScalar(deserialized, type_1.DataType.B));
         if (deserialized.SS)
-            return resolve(this.deformationList(deserialized, type_1.DataType.SS));
+            return resolve(this.deformationScalarList(deserialized, type_1.DataType.SS));
         if (deserialized.NS)
-            return resolve(this.deformationList(deserialized, type_1.DataType.NS));
+            return resolve(this.deformationScalarList(deserialized, type_1.DataType.NS));
         if (deserialized.BS)
-            return resolve(this.deformationList(deserialized, type_1.DataType.BS));
-        if (deserialized.L)
-            return resolve(this.deformationList(deserialized, type_1.DataType.L));
-        if (deserialized.M)
-            return resolve(this.deformationMap(deserialized));
+            return resolve(this.deformationScalarList(deserialized, type_1.DataType.BS));
+        if (deserialized.L) {
+            return resolve(this.deformationList(deserialized, propertyDescriptor.sourceDataType));
+        }
+        if (deserialized.M) {
+            return resolve(this.deformationMap(deserialized, propertyDescriptor.sourceDataType));
+        }
         if (deserialized.BOOL)
             return resolve(this.deformationScalar(deserialized, type_1.DataType.BOOL));
         if (deserialized.NULL)
@@ -201,23 +204,24 @@ class TynamoFormation {
     }
     // Convert dynamoItem to sourceObject.
     //
-    deformation(dynamo, TClass = metadata_1.default.getTClassByDynamoItem(dynamo)) {
+    deformation(dynamo, RootTClass) {
         // Check if, object is empty.
         if (dynamo === undefined) {
             throw new Error(`Empty object is not allowed`);
         }
         // Validation check.
         // Is it registered in the metadata?
+        const TClass = Reflect.getMetadata(key_1.MetaDataKey.TClass, RootTClass);
         const holder = new TClass();
-        const entityDescriptor = metadata_1.default.getEntityDescriptorByHolder(holder);
+        const entityDescriptor = metadata_1.default.getEntityDescriptorByConstructor(holder.constructor);
         // Gets all field descriptor to create the Object.
         const propertyDescriptors = [];
         if (entityDescriptor.hash)
             propertyDescriptors.push(entityDescriptor.hash);
-        if (entityDescriptor.range)
-            propertyDescriptors.push(entityDescriptor.range);
-        if (entityDescriptor.attrs)
-            propertyDescriptors.push(...entityDescriptor.attrs.values());
+        if (entityDescriptor.sort)
+            propertyDescriptors.push(entityDescriptor.sort);
+        if (entityDescriptor.attr)
+            propertyDescriptors.push(...entityDescriptor.attr.values());
         // Then deformation and merge all fields.
         for (const propertyDescriptor of propertyDescriptors) {
             const sourceProperty = this.deformationProperty(dynamo, propertyDescriptor);

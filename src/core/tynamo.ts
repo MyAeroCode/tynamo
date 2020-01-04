@@ -2,6 +2,7 @@ import { FormationMask, Item, PropertyDescriptor, DataType, EntityDescriptor } f
 import MetaData from "./metadata";
 import { fetchFromChunkOrValue } from "./utils";
 import { AttributeValue } from "aws-sdk/clients/dynamodb";
+import { MetaDataKey } from "../key";
 
 // Performs the interconversion between DynamoItem and the object.
 //
@@ -28,31 +29,27 @@ class TynamoFormation {
         }
     }
 
+    // Convert sourceScalarList to dynamoScalarList
+    //
+    formationScalarList(array: any[], dataType: DataType.NS | DataType.SS | DataType.BS): AttributeValue {
+        return {
+            [dataType]: array.map((v) => v.toString())
+        };
+    }
+
     // Convert sourceList to dynamoList.
     //
-    formationList(array: any[], dataType: DataType.NS | DataType.SS | DataType.BS | DataType.L): AttributeValue {
-        switch (dataType) {
-            case DataType.NS:
-            case DataType.SS:
-            case DataType.BS: {
-                return {
-                    [dataType]: array.map((v) => v.toString())
-                };
-            }
-
-            case DataType.L: {
-                return {
-                    [dataType]: array.map((v) => this.formation(v))
-                };
-            }
-        }
+    formationList(array: any[], TClass: any): AttributeValue {
+        return {
+            [DataType.L]: array.map((v) => this.formation(v, TClass))
+        };
     }
 
     // Conver source to dynamoMap.
     //
-    formationMap(source: any): AttributeValue {
+    formationMap(source: any, TClass: any): AttributeValue {
         return {
-            M: this.formation(source)
+            M: this.formation(source, TClass)
         };
     }
 
@@ -60,10 +57,10 @@ class TynamoFormation {
     //
     formationProperty(parent: any, propertyDescriptor: PropertyDescriptor<any>): Item {
         const dynamoPropertyName: string = propertyDescriptor.dynamoPropertyName;
-        let realDataType: DataType = propertyDescriptor.dataType;
+        let realDataType: DataType = propertyDescriptor.dynamoDataType;
 
         // custom property serializer check.
-        const source = fetchFromChunkOrValue<any>(propertyDescriptor.serializer, {
+        const source = propertyDescriptor.serializer({
             source: parent,
             propertyDescriptor: propertyDescriptor
         });
@@ -90,13 +87,16 @@ class TynamoFormation {
 
             case DataType.SS:
             case DataType.NS:
-            case DataType.BS:
+            case DataType.BS: {
+                return resolve(this.formationScalarList(source, realDataType));
+            }
+
             case DataType.L: {
-                return resolve(this.formationList(source, realDataType));
+                return resolve(this.formationList(source, propertyDescriptor.sourceDataType));
             }
 
             case DataType.M: {
-                return resolve(this.formationMap(source));
+                return resolve(this.formationMap(source, propertyDescriptor.sourceDataType));
             }
 
             case DataType.NULL: {
@@ -113,17 +113,21 @@ class TynamoFormation {
 
     // Convert sourceObject to dynamoItem.
     //
-    formation<TSource>(source: TSource | undefined, formationType: FormationMask = FormationMask.Full): Item {
+    formation<TSource>(
+        source: TSource | undefined,
+        RootTClass: any,
+        formationType: FormationMask = FormationMask.Full
+    ): Item {
         // Check if, source is empty.
         if (source === undefined || source === null) {
             throw new Error(`Empty object is not allowed`);
         }
 
-        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByHolder(source);
+        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByConstructor(RootTClass);
         const propertyDescriptors: PropertyDescriptor<TSource>[] = [];
         const HASH = entityDescriptor.hash;
-        const RANGE = entityDescriptor.range;
-        const ATTRS = entityDescriptor.attrs;
+        const RANGE = entityDescriptor.sort;
+        const ATTRS = entityDescriptor.attr;
 
         if (formationType & FormationMask.HashKey && HASH) propertyDescriptors.push(HASH);
         if (formationType & FormationMask.RangeKey && RANGE) propertyDescriptors.push(RANGE);
@@ -152,9 +156,9 @@ class TynamoFormation {
         }
     }
 
-    // Convert dynamoList to sourceList.
+    // Convert dynamoScalarList to sourceScalarList.
     //
-    deformationList(array: AttributeValue, dataType: DataType.NS | DataType.SS | DataType.BS | DataType.L): any[] {
+    deformationScalarList(array: AttributeValue, dataType: DataType.NS | DataType.SS | DataType.BS): any[] {
         switch (dataType) {
             case DataType.SS:
             case DataType.BS: {
@@ -164,17 +168,19 @@ class TynamoFormation {
             case DataType.NS: {
                 return (array[dataType] as string[]).map((v) => Number(v));
             }
-
-            case DataType.L: {
-                return (array[dataType] as any[]).map((v) => this.deformation(v));
-            }
         }
+    }
+
+    // Convert dynamoList to sourceList.
+    //
+    deformationList(array: AttributeValue, TClass: any): any[] {
+        return (array[DataType.L] as any[]).map((v) => this.deformation(v, TClass));
     }
 
     // Convert dynamoMap to source.
     //
-    deformationMap(dynamo: AttributeValue): any {
-        return this.deformation(dynamo.M!!);
+    deformationMap(dynamo: AttributeValue, TClass: any): any {
+        return this.deformation(dynamo.M!!, TClass);
     }
 
     // Convert dynamoProperty to sourceProperty.
@@ -197,11 +203,15 @@ class TynamoFormation {
         if (deserialized.S) return resolve(this.deformationScalar(deserialized, DataType.S));
         if (deserialized.N) return resolve(this.deformationScalar(deserialized, DataType.N));
         if (deserialized.B) return resolve(this.deformationScalar(deserialized, DataType.B));
-        if (deserialized.SS) return resolve(this.deformationList(deserialized, DataType.SS));
-        if (deserialized.NS) return resolve(this.deformationList(deserialized, DataType.NS));
-        if (deserialized.BS) return resolve(this.deformationList(deserialized, DataType.BS));
-        if (deserialized.L) return resolve(this.deformationList(deserialized, DataType.L));
-        if (deserialized.M) return resolve(this.deformationMap(deserialized));
+        if (deserialized.SS) return resolve(this.deformationScalarList(deserialized, DataType.SS));
+        if (deserialized.NS) return resolve(this.deformationScalarList(deserialized, DataType.NS));
+        if (deserialized.BS) return resolve(this.deformationScalarList(deserialized, DataType.BS));
+        if (deserialized.L) {
+            return resolve(this.deformationList(deserialized, propertyDescriptor.sourceDataType));
+        }
+        if (deserialized.M) {
+            return resolve(this.deformationMap(deserialized, propertyDescriptor.sourceDataType));
+        }
         if (deserialized.BOOL) return resolve(this.deformationScalar(deserialized, DataType.BOOL));
         if (deserialized.NULL) return resolve(undefined);
         return deserialized;
@@ -209,7 +219,7 @@ class TynamoFormation {
 
     // Convert dynamoItem to sourceObject.
     //
-    deformation(dynamo: Item, TClass: any = MetaData.getTClassByDynamoItem(dynamo)): any {
+    deformation(dynamo: Item, RootTClass: any): any {
         // Check if, object is empty.
         if (dynamo === undefined) {
             throw new Error(`Empty object is not allowed`);
@@ -217,14 +227,15 @@ class TynamoFormation {
 
         // Validation check.
         // Is it registered in the metadata?
-        const holder = new TClass();
-        const entityDescriptor: EntityDescriptor<any> = MetaData.getEntityDescriptorByHolder(holder);
+        const TClass: any = Reflect.getMetadata(MetaDataKey.TClass, RootTClass);
+        const holder: any = new TClass();
+        const entityDescriptor: EntityDescriptor<any> = MetaData.getEntityDescriptorByConstructor(holder.constructor);
 
         // Gets all field descriptor to create the Object.
         const propertyDescriptors: PropertyDescriptor<any>[] = [];
         if (entityDescriptor.hash) propertyDescriptors.push(entityDescriptor.hash);
-        if (entityDescriptor.range) propertyDescriptors.push(entityDescriptor.range);
-        if (entityDescriptor.attrs) propertyDescriptors.push(...entityDescriptor.attrs.values());
+        if (entityDescriptor.sort) propertyDescriptors.push(entityDescriptor.sort);
+        if (entityDescriptor.attr) propertyDescriptors.push(...entityDescriptor.attr.values());
 
         // Then deformation and merge all fields.
         for (const propertyDescriptor of propertyDescriptors) {

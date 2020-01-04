@@ -9,10 +9,10 @@ For example,
 ```ts
 @DynamoEntity
 class Cat {
-    @DynamoProperty(PropertyType.hash)
+    @DynamoProperty({ keyType: KeyType.hash })
     id: number;
 
-    @DynamoProperty(PropertyType.attr)
+    @DynamoProperty({ keyType: KeyType.attr })
     name: string;
 
     constructor(id: number, name: string) {
@@ -21,7 +21,7 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat);
+const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
 ```
 
 It will be formationed as below, and this can be used as a parameter that requires `AttributeMap`.
@@ -44,7 +44,6 @@ It will be formationed as below, and this can be used as a parameter that requir
     -   [Define dynamo entity](#define-dynamo-entity)
     -   [Define dynamo property](#define-dynamo-property)
     -   [Alias](#alias)
-    -   [Entity confliction](#entity-confliction)
     -   [Nested entity](#nested-entity)
     -   [Array of entity](#array-of-entity)
     -   [Support property type](#support-property-type)
@@ -54,8 +53,7 @@ It will be formationed as below, and this can be used as a parameter that requir
 -   [Mapping](#mapping)
     -   [Formation](#formation)
     -   [Formation mask](#formation-mask)
-    -   [Implicit deformation](#implicit-deformation)
-    -   [Explicit deformation](#explicit-deformation)
+    -   [Deformation](#deformation)
 -   [Using with DynamoDB(AWS-SDK)](#user-content-using-with-dynamodbaws-sdk)
     -   [putItem](#putitem)
     -   [getItem](#getitem)
@@ -66,6 +64,14 @@ npm :
 
 ```
 npm i tynamo
+```
+
+Then enable below parameter on your `tsconfig.json`.
+
+```
+/* Experimental Options */
+"experimentalDecorators": true  /* Enables experimental support for ES7 decorators. */,
+"emitDecoratorMetadata" : true  /* Enables experimental support for emitting type metadata for decorators. */,
 ```
 
 ## Define model
@@ -83,15 +89,15 @@ class Cat {
 
 ### Define dynamo property
 
-Write the `@DynamoProperty` decorator on top of the class definition.
-Only the corresponding Property is added to DynamoItem.
+Write the `@DynamoProperty` decorator on top of the property definition.
+This property will be added to DynamoItem.
 
 For example,
 
 ```ts
 @DynamoEntity
 class Cat {
-    @DynamoProperty(PropertyType.hash)
+    @DynamoProperty({ keyType: KeyType.hash })
     id: number;
 
     name: string;
@@ -102,7 +108,7 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat);
+const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
 ```
 
 It will be formationed as,
@@ -124,21 +130,22 @@ For example,
 ```ts
 @DynamoEntity
 class Cat {
-    @DynamoProperty(PropertyType.hash, {
+    @DynamoProperty({
+        keyType: KeyType.hash,
         propertyName: "number_id"
     })
-    __id: number;
+    id: number;
 
-    @DynamoProperty(PropertyType.attr)
+    @DynamoProperty({ keyType: KeyType.attr })
     name: string;
 
     constructor(id: number, name: string) {
-        this.__id = id;
+        this.id = id;
         this.name = name;
     }
 }
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat);
+const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
 ```
 
 It will be formationed as,
@@ -154,51 +161,6 @@ It will be formationed as,
 }
 ```
 
-### Entity confliction
-
-In some cases, the two entity of Signature may be the same.
-
-This is called `confliction`. If confliction occurs, the deformation is not performed normally and an error occurs.
-
-The following information is used to evaluate Singature:
-
--   Dynamo property name
--   ~~Dynamo property type~~ (todo)
--   ~~Dynamo property data type~~ (todo)
-
-```ts
-@DynamoEntity
-class Cat {
-    @DynamoProperty(PropertyType.hash)
-    id!: number;
-
-    @DynamoProperty(PropertyType.attr)
-    name!: string;
-}
-
-@DynamoEntity
-class Human {
-    @DynamoProperty(PropertyType.hash)
-    id!: number;
-
-    @DynamoProperty(PropertyType.attr)
-    name!: string;
-}
-```
-
-Because the above two Entities have the same Signature,
-
-When trying to deformation, the following error occurs:
-
-```
-Error: Entity structure conflict. -> [Cat, Human]
-    at MetaData.getTClassByDynamo
-    at TynamoFormation.deformation
-    at ...
-```
-
----
-
 ### Nested entity
 
 Only classes with "@DynamoEntity" be nested with `DataType.M`.
@@ -208,10 +170,10 @@ For example,
 ```ts
 @DynamoEntity
 class Catnip {
-    @DynamoProperty(PropertyType.hash)
+    @DynamoProperty({ keyType: KeyType.hash })
     id: number;
 
-    @DynamoProperty(PropertyType.attr)
+    @DynamoProperty({ keyType: KeyType.attr })
     name: string;
 
     constructor(id: number, name: string) {
@@ -222,15 +184,13 @@ class Catnip {
 
 @DynamoEntity
 class Cat {
-    @DynamoProperty(PropertyType.hash)
+    @DynamoProperty({ keyType: KeyType.hash })
     id: number;
 
-    @DynamoProperty(PropertyType.attr)
+    @DynamoProperty({ keyType: KeyType.attr })
     name: string;
 
-    @DynamoProperty(PropertyType.attr, {
-        dataType: DataType.M
-    })
+    @DynamoProperty({ keyType: KeyType.attr, dataType: DataType.M })
     catnip: Catnip;
 
     constructor(id: number, name: string, catnip: Catnip) {
@@ -240,7 +200,7 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield", new Catnip(777, "Happy Catnip"));
-const dynamoItem: Item = TynamoFormation.formation(badCat);
+const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
 ```
 
 It will be formationed as,
@@ -271,17 +231,14 @@ It will be formationed as,
 Only classes with "@DynamoEntity" be list-element with `DataType.L`.
 
 ```ts
-@DynamoEntity
 class Cat {
-    @DynamoProperty(PropertyType.hash)
+    @DynamoProperty({ keyType: KeyType.hash })
     id: number;
 
-    @DynamoProperty(PropertyType.attr)
+    @DynamoProperty({ keyType: KeyType.attr })
     name: string;
 
-    @DynamoProperty(PropertyType.attr, {
-        dataType: DataType.L
-    })
+    @DynamoProperty({ keyType: KeyType.attr, dataType: DataType.L })
     friends: Cat[];
 
     constructor(id: number, name: string, friends: Cat[]) {
@@ -302,17 +259,17 @@ class Cat {
 
 ### Support property data type
 
-| DataType | Require              |
-| :------- | :------------------- |
-| N        | number               |
-| S        | string               |
-| B        | string               |
-| NS       | Array<number>        |
-| SS       | Array<string>        |
-| BS       | Array<string>        |
-| BOOL     | boolean              |
-| M        | @DynamoEntity        |
-| L        | Array<@DynamoEntity> |
+| DataType | Require         |
+| :------- | :-------------- |
+| N        | number          |
+| S        | string          |
+| B        | string          |
+| NS       | number[]        |
+| SS       | string[]        |
+| BS       | string[]        |
+| BOOL     | boolean         |
+| M        | @DynamoEntity   |
+| L        | @DynamoEntity[] |
 
 ### Custom serializer
 
@@ -323,7 +280,8 @@ It is good for generate `composite key`.
 ```ts
 @DynamoEntity
 class Entity {
-    @DynamoProperty(PropertyType.hash, {
+    @DynamoProperty({
+        keyType: KeyType.hash,
         propertyName: "id",
         serializer: (arg: SerializerArg<Entity>) => {
             const source: Entity = arg.source;
@@ -341,7 +299,7 @@ class Entity {
     }
 }
 const entity = new Entity("Hello", "World!");
-const dynamoItem: Item = TynamoFormation.formation(entity);
+const dynamoItem: Item = TynamoFormation.formation(entity, Entity);
 ```
 
 It will be formationed as,
@@ -357,7 +315,8 @@ It will be formationed as,
 ### Custom deserializer
 
 Also you can revert using by value of DynamoItem. The `deserializer` returns fragment to return to the original object.
-If you have multiple deserializer, All fragments are merged to create the original object.
+You can have only one Serializer and only one Deserializer in each Property.
+All fragments are merged.
 
 ```ts
 @DynamoEntity
@@ -400,24 +359,14 @@ import { TynamoFormation } from "tynamo";
 
 ### Formation
 
-Converts objects created by the constructor of the class declared DynamoEntity to the DynamoDB Item.
-Note that must object is created by constructor.
-
-Do :
+Use `formation` method.
 
 ```ts
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat);
-```
+// or
+const badCat = { id: 666, name: "garfield" };
 
-Don't:
-
-```ts
-const badCat = {
-    id: 666,
-    name: "garfield"
-};
-const dynamoItem: Item = TynamoFormation.formation(badCat);
+const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
 ```
 
 ### Formation mask
@@ -432,82 +381,13 @@ export enum FormationMask {
     KeyOnly = 0b011, // == HashKey | RangeKey
     Full = 0b111 // defualt, == HashKey | RangeKey | Body
 }
+
+const dynamoItemKey: Item = TynamoFormation.formation(badCat, Cat, FormationMask.KeyOnly);
 ```
 
-For example,
+### deformation
 
-```ts
-@DynamoEntity
-class Cat {
-    @DynamoProperty(PropertyType.hash)
-    id: number;
-
-    @DynamoProperty(PropertyType.attr)
-    name: string;
-
-    constructor(id: number, name: string) {
-        this.id = id;
-        this.name = name;
-    }
-}
-const badCat = new Cat(666, "garfield");
-const dynamoItemKey: Item = TynamoFormation.formation(badCat, FormationMask.KeyOnly);
-```
-
-It will be formationed as,
-
-```ts
-{
-    "id": {
-        "N": "666"
-    }
-}
-```
-
-### Implicit deformation
-
-Convert to an object of Entity that has the same signature as a given DynamoItem.
-
-```ts
-@DynamoEntity
-class Cat {
-    @DynamoProperty(PropertyType.hash)
-    id: number;
-
-    @DynamoProperty(PropertyType.attr)
-    name: string;
-
-    constructor(id: number, name: string) {
-        this.id = id;
-        this.name = name;
-    }
-}
-const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat);
-const sourceItem = TynamoFormation.deformation(dynamoItem);
-```
-
-It will be deformationed to Cat object.
-It is same for nested or listed Entities.
-
-```
-Cat {id: 666, name: "garfield"}
-```
-
-Note that key item cannot be deformed.
-
-Don't :
-
-```ts
-const dynamoItemKey: Item = TynamoFormation.formation(badCat, FormationMask.KeyOnly);
-const sourceItem = TynamoFormation.deformation(dynamoItemKey); //< error.
-```
-
-### Explicit deformation
-
-If you want, you can explicitly hand over the type.
-
-There is little difference in performance.
+Use `deformation` method. Below example will returns `Cat {id:666, name:"garfield}` object.
 
 ```ts
 const badCat = new Cat(666, "garfield");
@@ -519,7 +399,7 @@ const sourceItem = TynamoFormation.deformation(dynamoItem, Cat);
 
 ### Using with DynamoDB(AWS-SDK)
 
-In fact, Item type is an alias of AttributeMap.
+In fact, `Item` type is an alias of `AttributeMap`.
 
 Therefore, Item type can be used where AttributeMap is required.
 
@@ -534,7 +414,7 @@ const conn = new AWS.DynamoDB({
 const result = await conn
     .putItem({
         TableName: "Cat",
-        Item: TynamoFormation.formation(badCat)
+        Item: TynamoFormation.formation(badCat, Cat)
     })
     .promise();
 ```
@@ -554,6 +434,7 @@ await conn
     })
     .promise()
     .then((response) => {
-        console.log(JSON.stringify(response.Item, null, 4));
+        TynamoFormation.deformation(response.Item, Cat);
+        ...
     });
 ```

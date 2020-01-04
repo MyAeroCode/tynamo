@@ -19,9 +19,9 @@ export enum DataType {
 
 // Property Type of DynamoDB.
 // Specially, HASH and RANGE are KeyType.
-export enum PropertyType {
+export enum KeyType {
     hash = "HASH",
-    range = "RANGE",
+    sort = "RANGE",
     attr = "ATTR"
 }
 
@@ -56,9 +56,11 @@ export class DeserializerArg {
 // Parameters to create the PropertyDescriptor.
 // Used in the DynamoItemField Decorator.
 export class PropertyDecoratorArgs<TSource> {
+    keyType!: KeyType;
     dataType?: DataType;
-    nullable?: boolean;
+    sourceDataType?: any;
     propertyName?: string;
+    nullable?: boolean;
     serializer?: Serializer<TSource>;
     deserializer?: Deserializer<TSource>;
 }
@@ -66,12 +68,12 @@ export class PropertyDecoratorArgs<TSource> {
 // Describe how one property in DynamoItem is created.
 // It also contain how to return to the original property from the DynamoItem property.
 export class PropertyDescriptor<TSource> {
-    TClassName!: string;
     nullable!: boolean;
-    dataType!: DataType;
     serializer!: Serializer<TSource>;
     deserializer!: Deserializer<TSource>;
-    dynamoPropertyType!: PropertyType;
+    sourceDataType!: any;
+    dynamoKeyType!: KeyType;
+    dynamoDataType!: DataType;
     sourcePropertyName!: string;
     dynamoPropertyName!: string;
 }
@@ -80,11 +82,10 @@ export type Deserializer<TSource> = Chunk<Partial<TSource>, DeserializerArg>;
 
 // Describe how one entity of DynamoDB is created.
 export class EntityDescriptor<TSource> {
-    TClass?: any;
-    hash?: PropertyDescriptor<TSource>;
-    range?: PropertyDescriptor<TSource>;
-    attrs?: Map<string, PropertyDescriptor<TSource>>; // Key is DynamoPropertyName
-    isStructureCached?: boolean;
+    TClass!: any;
+    hash!: PropertyDescriptor<TSource>;
+    sort?: PropertyDescriptor<TSource>;
+    attr!: PropertyDescriptor<TSource>[];
 }
 
 export enum FormationMask {

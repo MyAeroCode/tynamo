@@ -16,12 +16,12 @@ var DataType;
 })(DataType = exports.DataType || (exports.DataType = {}));
 // Property Type of DynamoDB.
 // Specially, HASH and RANGE are KeyType.
-var PropertyType;
-(function (PropertyType) {
-    PropertyType["hash"] = "HASH";
-    PropertyType["range"] = "RANGE";
-    PropertyType["attr"] = "ATTR";
-})(PropertyType = exports.PropertyType || (exports.PropertyType = {}));
+var KeyType;
+(function (KeyType) {
+    KeyType["hash"] = "HASH";
+    KeyType["sort"] = "RANGE";
+    KeyType["attr"] = "ATTR";
+})(KeyType = exports.KeyType || (exports.KeyType = {}));
 // The argument of the DataType Resolver.
 class DataTypeResolverArg {
 }

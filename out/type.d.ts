@@ -13,9 +13,9 @@ export declare enum DataType {
     NULL = "NULL",
     BOOL = "BOOL"
 }
-export declare enum PropertyType {
+export declare enum KeyType {
     hash = "HASH",
-    range = "RANGE",
+    sort = "RANGE",
     attr = "ATTR"
 }
 export declare type Item = AttributeMap;
@@ -33,30 +33,31 @@ export declare class DeserializerArg {
     propertyDescriptor: PropertyDescriptor<any>;
 }
 export declare class PropertyDecoratorArgs<TSource> {
+    keyType: KeyType;
     dataType?: DataType;
-    nullable?: boolean;
+    sourceDataType?: any;
     propertyName?: string;
+    nullable?: boolean;
     serializer?: Serializer<TSource>;
     deserializer?: Deserializer<TSource>;
 }
 export declare class PropertyDescriptor<TSource> {
-    TClassName: string;
     nullable: boolean;
-    dataType: DataType;
     serializer: Serializer<TSource>;
     deserializer: Deserializer<TSource>;
-    dynamoPropertyType: PropertyType;
+    sourceDataType: any;
+    dynamoKeyType: KeyType;
+    dynamoDataType: DataType;
     sourcePropertyName: string;
     dynamoPropertyName: string;
 }
 export declare type Serializer<TSource> = Chunk<any, SerializerArg<TSource>>;
 export declare type Deserializer<TSource> = Chunk<Partial<TSource>, DeserializerArg>;
 export declare class EntityDescriptor<TSource> {
-    TClass?: any;
-    hash?: PropertyDescriptor<TSource>;
-    range?: PropertyDescriptor<TSource>;
-    attrs?: Map<string, PropertyDescriptor<TSource>>;
-    isStructureCached?: boolean;
+    TClass: any;
+    hash: PropertyDescriptor<TSource>;
+    sort?: PropertyDescriptor<TSource>;
+    attr: PropertyDescriptor<TSource>[];
 }
 export declare enum FormationMask {
     HashKey = 1,

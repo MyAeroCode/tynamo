@@ -1,3 +1,6 @@
+# Compiled TestCase file.
+out/test/*
+
 # Logs
 logs
 *.log
