@@ -1,9 +1,10 @@
 import { PropertyDecoratorArgs } from "../type";
 import MetaData from "../core/metadata";
 
-// Class Member Decorator:
-//      Add this property to metadata.
-//
+/**
+ * Class Member Decorator:
+ *      Add this property to metadata.
+ */
 export function DynamoProperty<TObject>(args: PropertyDecoratorArgs<TObject>) {
     return function createDynamoPropertyDecorator(
         TClassObject: { constructor: any },

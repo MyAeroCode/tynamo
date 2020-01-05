@@ -1,4 +1,4 @@
-import { DynamoEntity, DynamoProperty, KeyType, TynamoFormation, Item } from "../index";
+import { DynamoEntity, DynamoProperty, KeyType, Mapper, Item } from "../index";
 import { deepEqual, deepStrictEqual } from "assert";
 import { DataType } from "../type";
 
@@ -36,7 +36,7 @@ describe("complex Model : Tree", () => {
     let dynamo: Item;
 
     it("tree 01 -> formation.", () => {
-        dynamo = TynamoFormation.formation(root, Node);
+        dynamo = Mapper.formation(root, Node);
         deepEqual(dynamo, {
             name: { S: "Hello" },
             left: {
@@ -63,6 +63,6 @@ describe("complex Model : Tree", () => {
     });
 
     it("tree 01 -> deformation", () => {
-        deepStrictEqual(root, TynamoFormation.deformation(dynamo, Node));
+        deepStrictEqual(root, Mapper.deformation(dynamo, Node));
     });
 });

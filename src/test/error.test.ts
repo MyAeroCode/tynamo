@@ -1,4 +1,4 @@
-import { DynamoEntity, DynamoProperty, KeyType, TynamoFormation } from "../index";
+import { DynamoEntity, DynamoProperty, KeyType, Mapper } from "../index";
 import chai from "chai";
 
 describe("error", () => {
@@ -10,28 +10,28 @@ describe("error", () => {
 
     it("When value of HashKey is not given.", () => {
         const entity: Entity = Object.assign(new Entity());
-        chai.assert.throws(() => TynamoFormation.formation(entity, Entity));
+        chai.assert.throws(() => Mapper.formation(entity, Entity));
     });
 
     it("When value of HashKey is undefined.", () => {
         const entity: Entity = Object.assign(new Entity(), {
             emptyHashKey: undefined
         });
-        chai.assert.throws(() => TynamoFormation.formation(entity, Entity));
+        chai.assert.throws(() => Mapper.formation(entity, Entity));
     });
 
     it("When value of HashKey is null.", () => {
         const entity: Entity = Object.assign(new Entity(), {
             emptyHashKey: null
         });
-        chai.assert.throws(() => TynamoFormation.formation(entity, Entity));
+        chai.assert.throws(() => Mapper.formation(entity, Entity));
     });
 
     it("When value of HashKey is empty string.", () => {
         const entity: Entity = Object.assign(new Entity(), {
             emptyHashKey: ""
         });
-        chai.assert.throws(() => TynamoFormation.formation(entity, Entity));
+        chai.assert.throws(() => Mapper.formation(entity, Entity));
     });
 
     it("When HashKey is nullable.", () => {
@@ -61,7 +61,7 @@ describe("error", () => {
                 @DynamoProperty({ keyType: KeyType.sort, nullable: true })
                 id!: number;
             }
-            TynamoFormation.formation({ id: 3 }, OnlySortKey);
+            Mapper.formation({ id: 3 }, OnlySortKey);
         });
     });
 
@@ -71,7 +71,7 @@ describe("error", () => {
                 @DynamoProperty({ keyType: KeyType.hash, nullable: true })
                 id!: number;
             }
-            TynamoFormation.formation({ id: 3 }, DynamoEntityMissing);
+            Mapper.formation({ id: 3 }, DynamoEntityMissing);
         });
     });
 
@@ -140,7 +140,7 @@ describe("error", () => {
             const entity: Entity2 = Object.assign(new Entity2(), {
                 a: "Hello"
             });
-            TynamoFormation.formation(entity, Entity2);
+            Mapper.formation(entity, Entity2);
         });
     });
 
@@ -150,7 +150,7 @@ describe("error", () => {
                 a: "Hello",
                 b: undefined
             });
-            TynamoFormation.formation(entity, Entity2);
+            Mapper.formation(entity, Entity2);
         });
     });
 
@@ -160,7 +160,7 @@ describe("error", () => {
                 a: "Hello",
                 b: null
             });
-            TynamoFormation.formation(entity, Entity2);
+            Mapper.formation(entity, Entity2);
         });
     });
 
@@ -170,7 +170,7 @@ describe("error", () => {
                 a: "Hello",
                 b: ""
             });
-            TynamoFormation.formation(entity, Entity2);
+            Mapper.formation(entity, Entity2);
         });
     });
 
@@ -179,66 +179,66 @@ describe("error", () => {
             a: "Hello",
             b: "H"
         });
-        TynamoFormation.formation(entity, Entity2);
+        Mapper.formation(entity, Entity2);
     });
 
     it("formate undefined.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.formation(undefined, Entity);
+            Mapper.formation(undefined, Entity);
         });
     });
 
     it("formate null.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.formation(null, Entity);
+            Mapper.formation(null, Entity);
         });
     });
 
     it("formate number.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.formation(777, Entity);
+            Mapper.formation(777, Entity);
         });
     });
 
     it("formate string.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.formation("Hello, World!", Entity);
+            Mapper.formation("Hello, World!", Entity);
         });
     });
 
     it("formate boolean.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.formation(true, Entity);
+            Mapper.formation(true, Entity);
         });
     });
 
     it("deformate undefined.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.deformation(undefined as any, Entity);
+            Mapper.deformation(undefined as any, Entity);
         });
     });
 
     it("deformate null.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.deformation(null as any, Entity);
+            Mapper.deformation(null as any, Entity);
         });
     });
 
     it("deformate number.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.deformation(777 as any, Entity);
+            Mapper.deformation(777 as any, Entity);
         });
     });
 
     it("deformate string.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.deformation("Hello, World!" as any, Entity);
+            Mapper.deformation("Hello, World!" as any, Entity);
         });
     });
 
     it("deformate boolean.", () => {
         chai.assert.throws(() => {
-            TynamoFormation.deformation(true as any, Entity);
+            Mapper.deformation(true as any, Entity);
         });
     });
 });

@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { DynamoProperty } from "./decorator/dynamo-property";
 import { DynamoEntity } from "./decorator/dynamo-entity";
-import TynamoFormation from "./core/tynamo";
+import Mapper from "./core/tynamo";
 import MetaData from "./core/metadata";
 import {
     PropertyDecoratorArgs,
@@ -20,7 +20,7 @@ export {
     DynamoEntity,
     DynamoProperty,
     DataTypeResolverArg,
-    TynamoFormation,
+    Mapper,
     MetaData,
     DataType,
     KeyType,

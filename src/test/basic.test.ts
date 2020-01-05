@@ -1,4 +1,4 @@
-import { DynamoProperty, KeyType, DataType, TynamoFormation, Item, DynamoEntity } from "../index";
+import { DynamoProperty, KeyType, DataType, Mapper, Item, DynamoEntity } from "../index";
 import { deepEqual, deepStrictEqual } from "assert";
 
 describe("basic formation/deformation", () => {
@@ -15,7 +15,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("S -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -26,7 +26,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("S -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -43,7 +43,7 @@ describe("basic formation/deformation", () => {
         let dynamo: Item;
         let recover: Entity;
         it("N -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -54,7 +54,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("N -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -72,7 +72,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("B -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -83,7 +83,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("B -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -101,7 +101,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("BOOL -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -112,7 +112,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("BOOL -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -130,7 +130,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("SS -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -141,7 +141,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("SS -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -159,7 +159,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("NS -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -170,7 +170,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("NS -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -188,7 +188,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("BS -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -199,7 +199,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("BS -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -231,7 +231,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("M -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -251,7 +251,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("M -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }
@@ -281,7 +281,7 @@ describe("basic formation/deformation", () => {
         let recover: Entity;
 
         it("L -> formation", () => {
-            dynamo = TynamoFormation.formation(source, Entity);
+            dynamo = Mapper.formation(source, Entity);
             deepEqual(
                 dynamo,
                 {
@@ -308,7 +308,7 @@ describe("basic formation/deformation", () => {
         });
 
         it("L -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamo, Entity);
+            recover = Mapper.deformation(dynamo, Entity);
             deepStrictEqual(recover, source);
         });
     }

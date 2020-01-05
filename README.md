@@ -7,6 +7,8 @@ It helps you use DynamoDB without deviating from the basic AWS-SDK usage.
 For example,
 
 ```ts
+import { Mapper, DynamoEntity, DynamoProperty } from "tynamo";
+
 @DynamoEntity
 class Cat {
     @DynamoProperty({ keyType: KeyType.hash })
@@ -21,10 +23,10 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
+const dynamoItem: Item = Mapper.formation(badCat, Cat);
 ```
 
-It will be formationed as below, and this can be used as a parameter that requires `AttributeMap`.
+It will be formationed as below,
 
 ```json
 {
@@ -37,8 +39,27 @@ It will be formationed as below, and this can be used as a parameter that requir
 }
 ```
 
+and this can be used as a parameter that requires `AttributeMap`.
+
+```ts
+import AWS from "aws-sdk";
+
+const conn = new AWS.DynamoDB({
+    region: "...",
+    endpoint: "http://localhost:8000"
+});
+
+const result = await conn
+    .putItem({
+        TableName: "Cat",
+        Item: Mapper.formation(badCat, Cat)
+    })
+    .promise();
+```
+
 ## Table of Contents
 
+-   [Feature](#feature)
 -   [Installation](#installation)
 -   [Define model](#define-model)
     -   [Define dynamo entity](#define-dynamo-entity)
@@ -58,6 +79,29 @@ It will be formationed as below, and this can be used as a parameter that requir
     -   [putItem](#putitem)
     -   [getItem](#getitem)
 
+## Feature
+
+It's a recently created ORM. Tynamo don't have many features yet.
+
+Current Feature,
+
+-   [Define model](#define-model)
+-   [Mapping](#mapping)
+
+Todo,
+
+-   ETL support.
+    -   Put/Get
+    -   BatchWrite/BatchGet
+    -   Scan
+    -   Query
+    -   ...
+-   Pagination support.
+    -   Page Number Based.
+    -   Cursor Based.
+    -   ...
+-   ...
+
 ## Installation
 
 npm :
@@ -68,10 +112,16 @@ npm i tynamo
 
 Then enable below parameter on your `tsconfig.json`.
 
-```
+```ts
 /* Experimental Options */
 "experimentalDecorators": true  /* Enables experimental support for ES7 decorators. */,
 "emitDecoratorMetadata" : true  /* Enables experimental support for emitting type metadata for decorators. */,
+```
+
+the following import syntax may be required on the top:
+
+```ts
+import "reflect-metadata";
 ```
 
 ## Define model
@@ -108,7 +158,7 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
+const dynamoItem: Item = Mapper.formation(badCat, Cat);
 ```
 
 It will be formationed as,
@@ -145,7 +195,7 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
+const dynamoItem: Item = Mapper.formation(badCat, Cat);
 ```
 
 It will be formationed as,
@@ -200,7 +250,7 @@ class Cat {
     }
 }
 const badCat = new Cat(666, "garfield", new Catnip(777, "Happy Catnip"));
-const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
+const dynamoItem: Item = Mapper.formation(badCat, Cat);
 ```
 
 It will be formationed as,
@@ -299,7 +349,7 @@ class Entity {
     }
 }
 const entity = new Entity("Hello", "World!");
-const dynamoItem: Item = TynamoFormation.formation(entity, Entity);
+const dynamoItem: Item = Mapper.formation(entity, Entity);
 ```
 
 It will be formationed as,
@@ -351,10 +401,10 @@ class Entity {
 
 ## Mapping
 
-You can map(formation or deformation) the DynamoEntity with a TynamoFormation object.
+You can map(formation or deformation) the DynamoEntity with a Mapper object.
 
 ```ts
-import { TynamoFormation } from "tynamo";
+import { Mapper } from "tynamo";
 ```
 
 ### Formation
@@ -366,7 +416,7 @@ const badCat = new Cat(666, "garfield");
 // or
 const badCat = { id: 666, name: "garfield" };
 
-const dynamoItem: Item = TynamoFormation.formation(badCat, Cat);
+const dynamoItem: Item = Mapper.formation(badCat, Cat);
 ```
 
 ### Formation mask
@@ -382,7 +432,7 @@ export enum FormationMask {
     Full = 0b111 // defualt, == HashKey | RangeKey | Body
 }
 
-const dynamoItemKey: Item = TynamoFormation.formation(badCat, Cat, FormationMask.KeyOnly);
+const dynamoItemKey: Item = Mapper.formation(badCat, Cat, FormationMask.KeyOnly);
 ```
 
 ### deformation
@@ -391,8 +441,8 @@ Use `deformation` method. Below example will returns `Cat {id:666, name:"garfiel
 
 ```ts
 const badCat = new Cat(666, "garfield");
-const dynamoItem: Item = TynamoFormation.formation(badCat);
-const sourceItem = TynamoFormation.deformation(dynamoItem, Cat);
+const dynamoItem: Item = Mapper.formation(badCat);
+const sourceItem = Mapper.deformation(dynamoItem, Cat);
 ```
 
 ---
@@ -414,7 +464,7 @@ const conn = new AWS.DynamoDB({
 const result = await conn
     .putItem({
         TableName: "Cat",
-        Item: TynamoFormation.formation(badCat, Cat)
+        Item: Mapper.formation(badCat, Cat)
     })
     .promise();
 ```
@@ -430,11 +480,11 @@ const conn = new AWS.DynamoDB({
 await conn
     .getItem({
         TableName: "Cat",
-        Key: TynamoFormation.formation(badCat, FormationMask.KeyOnly)
+        Key: Mapper.formation(badCat, FormationMask.KeyOnly)
     })
     .promise()
     .then((response) => {
-        TynamoFormation.deformation(response.Item, Cat);
+        Mapper.deformation(response.Item, Cat);
         ...
     });
 ```

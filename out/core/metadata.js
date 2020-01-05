@@ -4,9 +4,11 @@ const type_1 = require("../type");
 const key_1 = require("../key");
 const utils_1 = require("./utils");
 class MetaData {
-    // Attch TClass(constructable) into EntityDescriptor.
-    // It is for create a new object through TClass.
-    //
+    /**
+     * Attch TClass and TableInformation into metadata.
+     * - TClass is for create a new object.
+     * - TableInformation is for create a new DynamoTable when corresponding table is no exist. (todo)
+     */
     registEntity(TClass) {
         const TClassConstructor = new TClass().constructor;
         Reflect.defineMetadata(key_1.MetaDataKey.TClass, TClass, TClassConstructor);

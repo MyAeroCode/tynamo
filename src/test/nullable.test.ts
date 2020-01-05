@@ -1,4 +1,4 @@
-import { DynamoProperty, KeyType, DataType, TynamoFormation, Item, DynamoEntity } from "../index";
+import { DynamoProperty, KeyType, DataType, Mapper, Item, DynamoEntity } from "../index";
 import { deepEqual, strictEqual } from "assert";
 
 describe("nullable", () => {
@@ -28,7 +28,7 @@ describe("nullable", () => {
             bin: undefined
         });
         it("is undefined -> formation", () => {
-            dynamoItem = TynamoFormation.formation(entity, Entity);
+            dynamoItem = Mapper.formation(entity, Entity);
             deepEqual(
                 dynamoItem,
                 {
@@ -39,7 +39,7 @@ describe("nullable", () => {
             );
         });
         it("is undefined -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamoItem, Entity);
+            recover = Mapper.deformation(dynamoItem, Entity);
             deepEqual(recover, entity, "-");
             strictEqual(recover.constructor, Entity);
         });
@@ -53,7 +53,7 @@ describe("nullable", () => {
             bin: null
         });
         it("is null -> formation", () => {
-            dynamoItem = TynamoFormation.formation(entity, Entity);
+            dynamoItem = Mapper.formation(entity, Entity);
             deepEqual(
                 dynamoItem,
                 {
@@ -64,7 +64,7 @@ describe("nullable", () => {
             );
         });
         it("is null -> deformation", () => {
-            recover = TynamoFormation.deformation(dynamoItem, Entity);
+            recover = Mapper.deformation(dynamoItem, Entity);
             deepEqual(recover, entity, "-");
             strictEqual(recover.constructor, Entity);
         });

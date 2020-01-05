@@ -1,4 +1,4 @@
-import { DynamoEntity, DynamoProperty, TynamoFormation, Item, Serializer, Deserializer, KeyType } from "../index";
+import { DynamoEntity, DynamoProperty, Mapper, Item, Serializer, Deserializer, KeyType } from "../index";
 import { deepEqual, strictEqual, deepStrictEqual } from "assert";
 
 describe("serializer/deserializer", () => {
@@ -35,7 +35,7 @@ describe("serializer/deserializer", () => {
     let dynamoItem: Item;
     let recover: Entity;
     it("formation", () => {
-        dynamoItem = TynamoFormation.formation(entity, Entity);
+        dynamoItem = Mapper.formation(entity, Entity);
         deepEqual(
             dynamoItem,
             {
@@ -46,7 +46,7 @@ describe("serializer/deserializer", () => {
     });
 
     it("deformation", () => {
-        recover = TynamoFormation.deformation(dynamoItem, Entity);
+        recover = Mapper.deformation(dynamoItem, Entity);
         deepStrictEqual(recover, entity);
     });
 });

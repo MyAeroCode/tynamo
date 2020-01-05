@@ -7,5 +7,6 @@ var MetaDataKey;
     MetaDataKey["Attr"] = "tynamo:metadata:attr";
     MetaDataKey["TClass"] = "tynamo:metadata:tclass";
     MetaDataKey["PropertyDescriptor"] = "tynamo:metadata:propertydescriptor";
+    MetaDataKey["TableInformation"] = "tynamo:metadata:tableinformation";
 })(MetaDataKey = exports.MetaDataKey || (exports.MetaDataKey = {}));
 //# sourceMappingURL=key.js.map

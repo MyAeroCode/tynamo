@@ -1,11 +1,13 @@
-import { PropertyDescriptor, EntityDescriptor, KeyType, Item, DataType, PropertyDecoratorArgs } from "../type";
+import { PropertyDescriptor, EntityDescriptor, KeyType, DataType, PropertyDecoratorArgs } from "../type";
 import { MetaDataKey } from "../key";
 import { defaultSerializer, defaultDeserializer } from "./utils";
 
 class MetaData {
-    // Attch TClass(constructable) into EntityDescriptor.
-    // It is for create a new object through TClass.
-    //
+    /**
+     * Attch TClass and TableInformation into metadata.
+     * - TClass is for create a new object.
+     * - TableInformation is for create a new DynamoTable when corresponding table is no exist. (todo)
+     */
     public registEntity(TClass: any): void {
         const TClassConstructor: any = new TClass().constructor;
         Reflect.defineMetadata(MetaDataKey.TClass, TClass, TClassConstructor);
