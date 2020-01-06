@@ -22,10 +22,6 @@ var KeyType;
     KeyType["sort"] = "RANGE";
     KeyType["attr"] = "ATTR";
 })(KeyType = exports.KeyType || (exports.KeyType = {}));
-// The argument of the DataType Resolver.
-class DataTypeResolverArg {
-}
-exports.DataTypeResolverArg = DataTypeResolverArg;
 // The argument of the Serializer function.
 class SerializerArg {
 }

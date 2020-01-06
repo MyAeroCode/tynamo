@@ -1,21 +1,40 @@
-import { PropertyDescriptor, EntityDescriptor, KeyType, DataType, PropertyDecoratorArgs } from "../type";
-import { MetaDataKey } from "../key";
+import {
+    PropertyDescriptor,
+    EntityDescriptor,
+    KeyType,
+    DataType,
+    PropertyDecoratorArgs,
+    TableInformation
+} from "./type";
+import { MetaDataKey } from "./key";
 import { defaultSerializer, defaultDeserializer } from "./utils";
 
 class MetaData {
     /**
      * Attch TClass and TableInformation into metadata.
      * - TClass is for create a new object.
-     * - TableInformation is for create a new DynamoTable when corresponding table is no exist. (todo)
+     * - TableInformation is for create a new DynamoTable when corresponding table is no exist.
      */
-    public registEntity(TClass: any): void {
+    public registEntity(TClass: any, particialTableInfo: Partial<TableInformation> = {}): void {
         const TClassConstructor: any = new TClass().constructor;
+
+        // Default Table Information.
+        if (particialTableInfo.TableName === undefined) particialTableInfo.TableName = TClass.name;
+        if (particialTableInfo.ProvisionedThroughput === undefined) {
+            particialTableInfo.ProvisionedThroughput = {
+                ReadCapacityUnits: 5,
+                WriteCapacityUnits: 5
+            };
+        }
+
         Reflect.defineMetadata(MetaDataKey.TClass, TClass, TClassConstructor);
+        Reflect.defineMetadata(MetaDataKey.TableInformation, particialTableInfo, TClassConstructor);
     }
 
-    // Insert one Property Descriptor.
-    // It can be merged if it does not conflict.
-    //
+    /**
+     * Insert one Property Descriptor.
+     * It can be merged if it does not conflict.
+     */
     public registProperty(TClassConstructor: any, sourcePropertyName: string, args: PropertyDecoratorArgs<any>): void {
         const predictSourceDataType = Reflect.getMetadata("design:type", new TClassConstructor(), sourcePropertyName);
         if (args.dataType === undefined) {
@@ -71,9 +90,10 @@ class MetaData {
         );
     }
 
-    // Examine for conflicting property.
-    // Test if the duplicate keyType or propertyName.
-    //
+    /**
+     * Examine for conflicting property.
+     * Test if the duplicate keyType or propertyName.
+     */
     private propertyConflictTest<TSource>(TClassConstructor: any, propertyDescriptor: PropertyDescriptor<TSource>) {
         if (Reflect.getMetadata(MetaDataKey.Attr, TClassConstructor) === undefined) {
             Reflect.defineMetadata(MetaDataKey.Attr, [], TClassConstructor);
@@ -104,10 +124,9 @@ class MetaData {
             );
     }
 
-    // Gets the Entity Descriptor associated with a given object.
-    // Instead of the class itself, pass over the holder.
-    // e.g) getOf(new Something());
-    //
+    /**
+     * Get the Entity Descriptor associated with a given constructor.
+     */
     public getEntityDescriptorByConstructor<TSource>(TClassConstructor: any): EntityDescriptor<TSource> {
         if (Reflect.getMetadata(MetaDataKey.TClass, TClassConstructor) === undefined)
             throw new Error(`Can not find ClassInfo. Maybe @DynamoEntity is missing on [${TClassConstructor.name}]`);
@@ -120,7 +139,34 @@ class MetaData {
             attr: Reflect.getMetadata(MetaDataKey.Attr, TClassConstructor)
         };
     }
+
+    /**
+     * Get the TableInfo associated with a given constructor.
+     * TableInfo contain informations for create table. (tableName, billingmode, ...)
+     */
+    public getTableInfoByConstructor(TClassConstructor: any): TableInformation {
+        const tableInformation: TableInformation | undefined = Reflect.getMetadata(
+            MetaDataKey.TableInformation,
+            TClassConstructor
+        );
+        if (tableInformation === undefined) {
+            throw new Error(`Maybe missing @DynamoEntity on [${TClassConstructor.name}]`);
+        }
+        return tableInformation;
+    }
+
+    /**
+     * Get the keys associated with a given constructor.
+     * It contain hash key, and maybe contain sort key.
+     */
+    public getKeysByConstructor(TClassConstructor: any): PropertyDescriptor<any>[] {
+        const entityDescriptor: EntityDescriptor<any> = this.getEntityDescriptorByConstructor(TClassConstructor);
+        const keys: PropertyDescriptor<any>[] = [];
+        keys.push(entityDescriptor.hash);
+        if (entityDescriptor.sort) keys.push(entityDescriptor.sort);
+        return keys;
+    }
 }
 
-const metaData = new MetaData();
-export default metaData;
+const _ = new MetaData();
+export default _;

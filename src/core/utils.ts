@@ -1,5 +1,4 @@
-import { ChunkOrValue, Serializer, SerializerArg, Deserializer, DeserializerArg, DataType, Item, Chunk } from "../type";
-import { TableName } from "aws-sdk/clients/dynamodb";
+import { ChunkOrValue, Serializer, SerializerArg, Deserializer, DeserializerArg } from "./type";
 
 /**
  * Default serializer.
@@ -17,19 +16,12 @@ export const defaultDeserializer: Deserializer<any> = (arg: DeserializerArg): an
 };
 
 /**
- * Default tableNameResolver.
- */
-export function defaultTableNameResolver<TSource>(source: TSource): TableName {
-    return (source as any).constructor.name;
-}
-
-/**
  * Get the value from chunk or value.
  *
  * @param cov Chunk or Value.
  * @param arg Argument using in chunk.
  */
-export function fetchFromChunkOrValue<TObject>(cov: ChunkOrValue<TObject, any>, arg: any): TObject {
+export function fetchFromChunkOrValue<TSource>(cov: ChunkOrValue<TSource, any>, arg: any): TSource {
     if (cov == undefined) throw new Error("not allow empty.");
 
     const shadow = cov as any;

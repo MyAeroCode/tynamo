@@ -1,17 +1,19 @@
-import { DynamoProperty, KeyType, DataType, Mapper, Item, DynamoEntity } from "../index";
+import { DynamoProperty, Type, Mapper, DynamoEntity } from "../index";
 import { deepEqual, deepStrictEqual } from "assert";
+import { KeyType, DataType } from "../core/type";
+import { AttributeMap } from "aws-sdk/clients/dynamodbstreams";
 
 describe("basic formation/deformation", () => {
     // TestCase 01
     // S
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash })
             str!: string;
         }
         const source: Entity = Object.assign(new Entity(), { str: "Hello" });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("S -> formation", () => {
@@ -34,13 +36,13 @@ describe("basic formation/deformation", () => {
     // TestCase 02
     // N
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash })
             num!: number;
         }
         const source: Entity = Object.assign(new Entity(), { num: 1 });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
         it("N -> formation", () => {
             dynamo = Mapper.formation(source, Entity);
@@ -62,13 +64,13 @@ describe("basic formation/deformation", () => {
     // TestCase 03
     // B
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.B })
             binary!: string;
         }
         const source: Entity = Object.assign(new Entity(), { binary: "This is binary" });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("B -> formation", () => {
@@ -91,13 +93,13 @@ describe("basic formation/deformation", () => {
     // TestCase 04
     // BOOL
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash })
             bool!: boolean;
         }
         const source: Entity = Object.assign(new Entity(), { bool: true });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("BOOL -> formation", () => {
@@ -120,13 +122,13 @@ describe("basic formation/deformation", () => {
     // TestCase 05
     // SS
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.SS })
             strarr!: string[];
         }
         const source: Entity = Object.assign(new Entity(), { strarr: ["H", "e", "e"] });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("SS -> formation", () => {
@@ -149,13 +151,13 @@ describe("basic formation/deformation", () => {
     // TestCase 06
     // NS
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.NS })
             numarr!: number[];
         }
         const source: Entity = Object.assign(new Entity(), { numarr: [2, 3, 4] });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("NS -> formation", () => {
@@ -178,13 +180,13 @@ describe("basic formation/deformation", () => {
     // TestCase 07
     // BS
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.BS })
             binaryarr!: number[];
         }
         const source: Entity = Object.assign(new Entity(), { binaryarr: ["x", "y", "z"] });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("BS -> formation", () => {
@@ -207,13 +209,13 @@ describe("basic formation/deformation", () => {
     // TestCase 08
     // M
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Data {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.S })
             str!: string;
         }
 
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.S })
             str!: string;
@@ -227,7 +229,7 @@ describe("basic formation/deformation", () => {
                 str: "inner"
             })
         });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("M -> formation", () => {
@@ -259,13 +261,13 @@ describe("basic formation/deformation", () => {
     // TestCase 09
     // L
     {
-        @DynamoEntity
+        @DynamoEntity()
         class Data {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.S })
             str!: string;
         }
 
-        @DynamoEntity
+        @DynamoEntity()
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.S })
             str!: string;
@@ -277,7 +279,7 @@ describe("basic formation/deformation", () => {
             str: "outer",
             dat: [Object.assign(new Data(), { str: "aa" }), Object.assign(new Data(), { str: "bb" })]
         });
-        let dynamo: Item;
+        let dynamo: AttributeMap;
         let recover: Entity;
 
         it("L -> formation", () => {

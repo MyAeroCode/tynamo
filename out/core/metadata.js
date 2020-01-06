@@ -1,21 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const type_1 = require("../type");
-const key_1 = require("../key");
+const type_1 = require("./type");
+const key_1 = require("./key");
 const utils_1 = require("./utils");
 class MetaData {
     /**
      * Attch TClass and TableInformation into metadata.
      * - TClass is for create a new object.
-     * - TableInformation is for create a new DynamoTable when corresponding table is no exist. (todo)
+     * - TableInformation is for create a new DynamoTable when corresponding table is no exist.
      */
-    registEntity(TClass) {
+    registEntity(TClass, particialTableInfo = {}) {
         const TClassConstructor = new TClass().constructor;
+        // Default Table Information.
+        if (particialTableInfo.TableName === undefined)
+            particialTableInfo.TableName = TClass.name;
+        if (particialTableInfo.ProvisionedThroughput === undefined) {
+            particialTableInfo.ProvisionedThroughput = {
+                ReadCapacityUnits: 5,
+                WriteCapacityUnits: 5
+            };
+        }
         Reflect.defineMetadata(key_1.MetaDataKey.TClass, TClass, TClassConstructor);
+        Reflect.defineMetadata(key_1.MetaDataKey.TableInformation, particialTableInfo, TClassConstructor);
     }
-    // Insert one Property Descriptor.
-    // It can be merged if it does not conflict.
-    //
+    /**
+     * Insert one Property Descriptor.
+     * It can be merged if it does not conflict.
+     */
     registProperty(TClassConstructor, sourcePropertyName, args) {
         const predictSourceDataType = Reflect.getMetadata("design:type", new TClassConstructor(), sourcePropertyName);
         if (args.dataType === undefined) {
@@ -63,9 +74,10 @@ class MetaData {
         }
         Reflect.defineMetadata(key_1.MetaDataKey.PropertyDescriptor, propertyDescriptor, TClassConstructor, sourcePropertyName);
     }
-    // Examine for conflicting property.
-    // Test if the duplicate keyType or propertyName.
-    //
+    /**
+     * Examine for conflicting property.
+     * Test if the duplicate keyType or propertyName.
+     */
     propertyConflictTest(TClassConstructor, propertyDescriptor) {
         if (Reflect.getMetadata(key_1.MetaDataKey.Attr, TClassConstructor) === undefined) {
             Reflect.defineMetadata(key_1.MetaDataKey.Attr, [], TClassConstructor);
@@ -89,10 +101,9 @@ class MetaData {
         if (set.has(propertyDescriptor.dynamoPropertyName))
             throw new Error(`property name duplicated. [${TClassConstructor.name}.${propertyDescriptor.sourcePropertyName}]`);
     }
-    // Gets the Entity Descriptor associated with a given object.
-    // Instead of the class itself, pass over the holder.
-    // e.g) getOf(new Something());
-    //
+    /**
+     * Get the Entity Descriptor associated with a given constructor.
+     */
     getEntityDescriptorByConstructor(TClassConstructor) {
         if (Reflect.getMetadata(key_1.MetaDataKey.TClass, TClassConstructor) === undefined)
             throw new Error(`Can not find ClassInfo. Maybe @DynamoEntity is missing on [${TClassConstructor.name}]`);
@@ -105,7 +116,30 @@ class MetaData {
             attr: Reflect.getMetadata(key_1.MetaDataKey.Attr, TClassConstructor)
         };
     }
+    /**
+     * Get the TableInfo associated with a given constructor.
+     * TableInfo contain informations for create table. (tableName, billingmode, ...)
+     */
+    getTableInfoByConstructor(TClassConstructor) {
+        const tableInformation = Reflect.getMetadata(key_1.MetaDataKey.TableInformation, TClassConstructor);
+        if (tableInformation === undefined) {
+            throw new Error(`Maybe missing @DynamoEntity on [${TClassConstructor.name}]`);
+        }
+        return tableInformation;
+    }
+    /**
+     * Get the keys associated with a given constructor.
+     * It contain hash key, and maybe contain sort key.
+     */
+    getKeysByConstructor(TClassConstructor) {
+        const entityDescriptor = this.getEntityDescriptorByConstructor(TClassConstructor);
+        const keys = [];
+        keys.push(entityDescriptor.hash);
+        if (entityDescriptor.sort)
+            keys.push(entityDescriptor.sort);
+        return keys;
+    }
 }
-const metaData = new MetaData();
-exports.default = metaData;
+const _ = new MetaData();
+exports.default = _;
 //# sourceMappingURL=metadata.js.map

@@ -2,23 +2,29 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
+// Core Feature.
+const tynamo_1 = __importDefault(require("./core/tynamo"));
+exports.Tynamo = tynamo_1.default;
+const mapper_1 = __importDefault(require("./core/mapper"));
+exports.Mapper = mapper_1.default;
+const metadata_1 = __importDefault(require("./core/metadata"));
+exports.MetaData = metadata_1.default;
+const expressionParser_1 = __importDefault(require("./core/expressionParser"));
+exports.ExpressionParser = expressionParser_1.default;
+const Type = __importStar(require("./core/type"));
+exports.Type = Type;
+// Decorator.
 const dynamo_property_1 = require("./decorator/dynamo-property");
 exports.DynamoProperty = dynamo_property_1.DynamoProperty;
 const dynamo_entity_1 = require("./decorator/dynamo-entity");
 exports.DynamoEntity = dynamo_entity_1.DynamoEntity;
-const tynamo_1 = __importDefault(require("./core/tynamo"));
-exports.Mapper = tynamo_1.default;
-const metadata_1 = __importDefault(require("./core/metadata"));
-exports.MetaData = metadata_1.default;
-const type_1 = require("./type");
-exports.PropertyDecoratorArgs = type_1.PropertyDecoratorArgs;
-exports.DataType = type_1.DataType;
-exports.DataTypeResolverArg = type_1.DataTypeResolverArg;
-exports.KeyType = type_1.KeyType;
-exports.FormationMask = type_1.FormationMask;
-exports.SerializerArg = type_1.SerializerArg;
-exports.DeserializerArg = type_1.DeserializerArg;
-exports.PropertyDescriptor = type_1.PropertyDescriptor;
 //# sourceMappingURL=index.js.map

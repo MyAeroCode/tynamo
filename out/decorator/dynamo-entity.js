@@ -8,8 +8,10 @@ const metadata_1 = __importDefault(require("../core/metadata"));
  * Class Decorator :
  *      Add this class to metadata.
  */
-function DynamoEntity(TClass) {
-    metadata_1.default.registEntity(TClass);
+function DynamoEntity(particialTableInfo) {
+    return (TClass) => {
+        metadata_1.default.registEntity(TClass, particialTableInfo);
+    };
 }
 exports.DynamoEntity = DynamoEntity;
 //# sourceMappingURL=dynamo-entity.js.map

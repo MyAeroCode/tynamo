@@ -1,8 +1,10 @@
-import { DynamoProperty, KeyType, DataType, Mapper, Item, DynamoEntity } from "../index";
+import { DynamoProperty, Mapper, DynamoEntity } from "../index";
 import { deepEqual, strictEqual } from "assert";
+import { KeyType, DataType } from "../core/type";
+import { AttributeMap } from "aws-sdk/clients/dynamodbstreams";
 
 describe("nullable", () => {
-    @DynamoEntity
+    @DynamoEntity()
     class Entity {
         @DynamoProperty({
             keyType: KeyType.hash
@@ -17,7 +19,7 @@ describe("nullable", () => {
         bin!: string;
     }
 
-    let dynamoItem: Item;
+    let dynamoItem: AttributeMap;
     let recover: Entity;
 
     // TestCase 01

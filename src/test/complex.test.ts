@@ -1,9 +1,10 @@
-import { DynamoEntity, DynamoProperty, KeyType, Mapper, Item } from "../index";
+import { DynamoEntity, DynamoProperty, Mapper } from "../index";
 import { deepEqual, deepStrictEqual } from "assert";
-import { DataType } from "../type";
+import { DataType, KeyType } from "../core/type";
+import { AttributeMap } from "aws-sdk/clients/dynamodbstreams";
 
 describe("complex Model : Tree", () => {
-    @DynamoEntity
+    @DynamoEntity()
     class Node {
         @DynamoProperty({
             keyType: KeyType.hash,
@@ -33,7 +34,7 @@ describe("complex Model : Tree", () => {
     }
 
     const root: Node = new Node("Hello", new Node("L", undefined, undefined), new Node("R", new Node("!!"), undefined));
-    let dynamo: Item;
+    let dynamo: AttributeMap;
 
     it("tree 01 -> formation.", () => {
         dynamo = Mapper.formation(root, Node);

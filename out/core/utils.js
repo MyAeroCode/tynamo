@@ -14,13 +14,6 @@ exports.defaultDeserializer = (arg) => {
     return arg.dynamo[arg.propertyDescriptor.dynamoPropertyName];
 };
 /**
- * Default tableNameResolver.
- */
-function defaultTableNameResolver(source) {
-    return source.constructor.name;
-}
-exports.defaultTableNameResolver = defaultTableNameResolver;
-/**
  * Get the value from chunk or value.
  *
  * @param cov Chunk or Value.

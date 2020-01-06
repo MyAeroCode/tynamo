@@ -1,4 +1,4 @@
-import { PropertyDecoratorArgs } from "../type";
+import { PropertyDecoratorArgs } from "../core/type";
 /**
  * Class Member Decorator:
  *      Add this property to metadata.

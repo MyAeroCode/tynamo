@@ -1,1 +1,1 @@
-{"version":3,"file":"dynamo-property.d.ts","sourceRoot":"","sources":["../../src/decorator/dynamo-property.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,qBAAqB,EAAE,MAAM,SAAS,CAAC;AAGhD;;;GAGG;AACH,wBAAgB,cAAc,CAAC,OAAO,EAAE,IAAI,EAAE,qBAAqB,CAAC,OAAO,CAAC;;gDAO3E"}
+{"version":3,"file":"dynamo-property.d.ts","sourceRoot":"","sources":["../../src/decorator/dynamo-property.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,qBAAqB,EAAE,MAAM,cAAc,CAAC;AAGrD;;;GAGG;AACH,wBAAgB,cAAc,CAAC,OAAO,EAAE,IAAI,EAAE,qBAAqB,CAAC,OAAO,CAAC;;gDAO3E"}

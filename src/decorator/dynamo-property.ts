@@ -1,4 +1,4 @@
-import { PropertyDecoratorArgs } from "../type";
+import { PropertyDecoratorArgs } from "../core/type";
 import MetaData from "../core/metadata";
 
 /**

@@ -1,111 +1,32 @@
-import { FormationMask, PropertyDescriptor, DataType } from "../type";
-import { AttributeMap, AttributeValue } from "aws-sdk/clients/dynamodb";
-/**
- * Performs the interconversion between source and DynamoObject.
- */
-declare class Mapper {
+import { TynamoPutItemInput, TynamoGetItemInput, TynamoGetItemOutput, TynamoPutItemOutput } from "./type";
+import { CreateTableOutput, DeleteTableOutput, DescribeTableOutput } from "aws-sdk/clients/dynamodb";
+import AWS from "aws-sdk";
+export default class Tynamo {
     /**
-     * Convert scalar to AttributeValue(N|S|B).
-     * (Undefined | null | EmptyString) is not allowd.
-     *
-     * For example,
-     *  formationScalar( 1 , DataType.N) => { N :  1 }
-     *  formationScalar("2", DataType.S) => { S : "2"}
-     *  formationScalar("3", DataType.B) => { B : "3"}
+     * DynamoDB Connection.
      */
-    formationScalar(scalar: any, dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL): AttributeValue;
+    private connection;
+    constructor(options?: AWS.DynamoDB.ClientConfiguration);
     /**
-     * Convert scalarArray to AttributeValue(NS|SS|BS).
-     *
-     * For example,
-     *  formationScalarArray([ 1 ,  2 ], DataType.NS) => { NS : ["1", "2"] }
-     *  formationScalarArray(["3", "4"], DataType.SS) => { SS : ["3", "4"] }
-     *  formationScalarArray(["5", "6"], DataType.BS) => { BS : ["5", "6"] }
+     * Create table corresponding given class.
+     * When table is pre-exist, occur error.
      */
-    formationScalarArray(scalarArray: any[], dataType: DataType.NS | DataType.SS | DataType.BS): AttributeValue;
+    createTable(TClass: any): Promise<CreateTableOutput>;
     /**
-     * Convert EntityArray to AttributeValue(L).
-     * EntityArray should not contain scalar.
-     *
-     * For example,
-     *  formationEntityArray([new Cat(0, "a"), new Cat(1, "b")], Cat) =>
-     *  { L :
-     *      [
-     *          {id:{N : "0"}, name:{S : "a"}},
-     *          {id:{N : "1"}, name:{S : "b"}}
-     *      ]
-     *  }
+     * Get information of table corresponding given class.
      */
-    formationEntityArray(entityArray: any[], TClass: any): AttributeValue;
+    describeTable(TClass: any): Promise<DescribeTableOutput>;
     /**
-     * Convert DynamoEntity to AttributeValue(M).
-     *
-     * For example,
-     *  formationMap(new Cat(0, "a"), Cat) =>
-     *  { M :
-     *      id   : {N : "0"},
-     *      name : {S : "a"}
-     *  }
+     * Delete table corresponding given class.
      */
-    formationMap(source: any, TClass: any): AttributeValue;
+    deleteTable(TClass: any): Promise<DeleteTableOutput>;
     /**
-     * Formate target property using parentSource and propertyDescriptor.
+     * Put item with conditional expression.
      */
-    formationProperty(parent: any, propertyDescriptor: PropertyDescriptor<any>): AttributeMap;
+    putItem<TSource>(tnmInput: TynamoPutItemInput<TSource>): Promise<TynamoPutItemOutput<TSource>>;
     /**
-     * Convert DynamoEntity to AttributeMap.
+     * Put item with projection expression.
      */
-    formation<TSource>(source: TSource | undefined, RootTClass: any, formationType?: FormationMask): AttributeMap;
-    /**
-     * Convert (N|S|B) to scalar.
-     *
-     * For example,
-     *  deformationScalar({N: "3"}, DataType.N) =>  3
-     *  deformationScalar({S: "X"}, DataType.S) => "X"
-     *  deformationScalar({B: "_"}, DataType.B) => "_"
-     */
-    deformationScalar(scalarValue: AttributeValue, dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL): any;
-    /**
-     * Convert (SS|BS|SS) to scalarArray.
-     *
-     * For example,
-     *  deformationScalarArray({NS: ["1", "3", "5"]}, DataType.NS) => [ 1 ,  3 ,  5 ]
-     *  deformationScalarArray({SS: ["A", "B", "C"]}, DataType.SS) => ["A", "B", "C"]
-     *  deformationScalarArray({BS: ["a", "b", "c"]}, DataType.BS) => ["a", "b", "c"]
-     */
-    deformationScalarArray(scalarArrayValue: AttributeValue, dataType: DataType.NS | DataType.SS | DataType.BS): any[];
-    /**
-     * Convert (L) to EntityArray.
-     * L should have only one entity type.
-     *
-     * For example,
-     *  deformationEntityArray({ L :
-     *      [
-     *          {id:{N : "0"}, name:{S : "a"}},
-     *          {id:{N : "1"}, name:{S : "b"}}
-     *      ]
-     *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
-     */
-    deformationEntityArray(entityArrayValue: AttributeValue, TClass: any): any[];
-    /**
-     * Convert (M) to entity.
-     *
-     * For example,
-     *  deformationMap({ M :
-     *      id   : {N : "0"},
-     *      name : {S : "a"}
-     *  }, Cat) => new Cat(0, "a")
-     */
-    deformationMap(dynamo: AttributeValue, TClass: any): any;
-    /**
-     * Deformate target property using parentAttributeMap and propertyDescriptor.
-     */
-    deformationProperty(parent: AttributeMap, propertyDescriptor: PropertyDescriptor<any>): any;
-    /**
-     * Convert AttributeMap to DynamoEntity.
-     */
-    deformation(target: AttributeMap, RootTClass: any): any;
+    getItem<TSource>(tnmInput: TynamoGetItemInput<TSource>): Promise<TynamoGetItemOutput<TSource>>;
 }
-declare const tynamoFormation: Mapper;
-export default tynamoFormation;
 //# sourceMappingURL=tynamo.d.ts.map

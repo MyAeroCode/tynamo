@@ -1,5 +1,7 @@
-import { DynamoEntity, DynamoProperty, Mapper, Item, Serializer, Deserializer, KeyType } from "../index";
+import { DynamoEntity, DynamoProperty, Mapper } from "../index";
 import { deepEqual, strictEqual, deepStrictEqual } from "assert";
+import { KeyType, Serializer, Deserializer } from "../core/type";
+import { AttributeMap } from "aws-sdk/clients/dynamodbstreams";
 
 describe("serializer/deserializer", () => {
     const mySerializer: Serializer<Entity> = (arg) => {
@@ -14,7 +16,7 @@ describe("serializer/deserializer", () => {
         };
     };
 
-    @DynamoEntity
+    @DynamoEntity()
     class Entity {
         @DynamoProperty({
             keyType: KeyType.hash,
@@ -32,7 +34,7 @@ describe("serializer/deserializer", () => {
         y: "b"
     });
 
-    let dynamoItem: Item;
+    let dynamoItem: AttributeMap;
     let recover: Entity;
     it("formation", () => {
         dynamoItem = Mapper.formation(entity, Entity);
