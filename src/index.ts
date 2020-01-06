@@ -22,6 +22,7 @@ import {
     TynamoGetItemInput,
     TynamoGetItemOutput
 } from "./core/type";
+import { AttributeMap, AttributeValue } from "aws-sdk/clients/dynamodb";
 
 // Decorator.
 import { DynamoProperty } from "./decorator/dynamo-property";
@@ -29,6 +30,8 @@ import { DynamoEntity } from "./decorator/dynamo-entity";
 
 // Export.
 export {
+    AttributeMap,
+    AttributeValue,
     Tynamo,
     Mapper,
     MetaData,
