@@ -2,13 +2,6 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
 // Core Feature.
@@ -20,8 +13,15 @@ const metadata_1 = __importDefault(require("./core/metadata"));
 exports.MetaData = metadata_1.default;
 const expressionParser_1 = __importDefault(require("./core/expressionParser"));
 exports.ExpressionParser = expressionParser_1.default;
-const Type = __importStar(require("./core/type"));
-exports.Type = Type;
+const type_1 = require("./core/type");
+exports.DataType = type_1.DataType;
+exports.KeyType = type_1.KeyType;
+exports.SerializerArg = type_1.SerializerArg;
+exports.DeserializerArg = type_1.DeserializerArg;
+exports.PropertyDecoratorArgs = type_1.PropertyDecoratorArgs;
+exports.PropertyDescriptor = type_1.PropertyDescriptor;
+exports.EntityDescriptor = type_1.EntityDescriptor;
+exports.FormationMask = type_1.FormationMask;
 // Decorator.
 const dynamo_property_1 = require("./decorator/dynamo-property");
 exports.DynamoProperty = dynamo_property_1.DynamoProperty;
