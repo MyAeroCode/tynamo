@@ -125,7 +125,7 @@ export interface TynamoPutItemInput<TSource> {
     // ExpressionAttributeValues?: ExpressionAttributeValueMap;
     // ConditionalOperator?: ConditionalOperator;
     Item: TSource;
-    ArgsItem?: any;
+    ValueItem?: any;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ExpressionAttributeNames?: ExpressionAttributeNameMap;

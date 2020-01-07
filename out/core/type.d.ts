@@ -72,7 +72,7 @@ export interface TableInformation<TSource = any> {
 }
 export interface TynamoPutItemInput<TSource> {
     Item: TSource;
-    ArgsItem?: any;
+    ValueItem?: any;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ExpressionAttributeNames?: ExpressionAttributeNameMap;

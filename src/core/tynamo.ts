@@ -133,7 +133,7 @@ export default class Tynamo {
             );
             input.ExpressionAttributeValues = ExpressionParser.getExpressionAttributeValues(
                 tnmInput.ConditionExpression,
-                tnmInput.ArgsItem
+                tnmInput.ValueItem
             );
         }
 

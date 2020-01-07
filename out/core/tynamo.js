@@ -112,7 +112,7 @@ class Tynamo {
             if (tnmInput.ConditionExpression) {
                 input.ConditionExpression = tnmInput.ConditionExpression;
                 input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(tnmInput.ConditionExpression, formationedItem, tnmInput.ExpressionAttributeNames);
-                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(tnmInput.ConditionExpression, tnmInput.ArgsItem);
+                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(tnmInput.ConditionExpression, tnmInput.ValueItem);
             }
             // Call DynamoDB API.
             const connection = this.connection;
