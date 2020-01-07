@@ -25,7 +25,6 @@ class ExpressionParser {
         givenNames?: AWS.DynamoDB.ExpressionAttributeNameMap
     ): AWS.DynamoDB.ExpressionAttributeNameMap | undefined {
         const names: string[] = this.parseExpressionArgument(expression, "#");
-        const errorOn: string[] = [];
 
         let ans: AWS.DynamoDB.ExpressionAttributeNameMap | undefined;
         if (names.length) {
@@ -41,16 +40,7 @@ class ExpressionParser {
                     if (!ans) ans = {};
                     ans[`#${name}`] = name;
                 }
-                // Not find.
-                else {
-                    errorOn.push(`#${name}`);
-                }
             }
-        }
-
-        // Check if there are any elements that have not been found.
-        if (errorOn.length) {
-            throw new Error(`Cat not find attributeName -> [${errorOn.join(", ")}]`);
         }
 
         return ans;
@@ -64,7 +54,6 @@ class ExpressionParser {
         valueItem?: any | undefined
     ): AWS.DynamoDB.ExpressionAttributeValueMap | undefined {
         const values: string[] = this.parseExpressionArgument(expression, ":");
-        const errorOn: string[] = [];
         let ans: AWS.DynamoDB.ExpressionAttributeValueMap | undefined;
 
         // Assign values.
@@ -78,16 +67,8 @@ class ExpressionParser {
                     // If find in values.
                     if (!ans) ans = {};
                     ans[`:${value}`] = formationedValues[value];
-                } else {
-                    // Not find.
-                    errorOn.push(`:${value}`);
                 }
             }
-        }
-
-        // Check if there are any elements that have not been found.
-        if (errorOn.length) {
-            throw new Error(`Can not find attributeValue -> [${errorOn.join(", ")}]`);
         }
 
         return ans;

@@ -20,7 +20,6 @@ class ExpressionParser {
      */
     getExpressionAttributeNames(expression, item, givenNames) {
         const names = this.parseExpressionArgument(expression, "#");
-        const errorOn = [];
         let ans;
         if (names.length) {
             ans = {};
@@ -37,15 +36,7 @@ class ExpressionParser {
                         ans = {};
                     ans[`#${name}`] = name;
                 }
-                // Not find.
-                else {
-                    errorOn.push(`#${name}`);
-                }
             }
-        }
-        // Check if there are any elements that have not been found.
-        if (errorOn.length) {
-            throw new Error(`Cat not find attributeName -> [${errorOn.join(", ")}]`);
         }
         return ans;
     }
@@ -54,7 +45,6 @@ class ExpressionParser {
      */
     getExpressionAttributeValues(expression, valueItem) {
         const values = this.parseExpressionArgument(expression, ":");
-        const errorOn = [];
         let ans;
         // Assign values.
         if (values.length) {
@@ -69,15 +59,7 @@ class ExpressionParser {
                         ans = {};
                     ans[`:${value}`] = formationedValues[value];
                 }
-                else {
-                    // Not find.
-                    errorOn.push(`:${value}`);
-                }
             }
-        }
-        // Check if there are any elements that have not been found.
-        if (errorOn.length) {
-            throw new Error(`Can not find attributeValue -> [${errorOn.join(", ")}]`);
         }
         return ans;
     }
