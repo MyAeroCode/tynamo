@@ -30,8 +30,7 @@ class ExpressionParser {
                         ans = {};
                     ans[`#${name}`] = givenNames[`#${name}`];
                 }
-                // If find in Item.
-                else if (item[name]) {
+                else {
                     if (!ans)
                         ans = {};
                     ans[`#${name}`] = name;
@@ -45,6 +44,7 @@ class ExpressionParser {
      */
     getExpressionAttributeValues(expression, valueItem) {
         const values = this.parseExpressionArgument(expression, ":");
+        const errorOn = [];
         let ans;
         // Assign values.
         if (values.length) {
@@ -59,7 +59,15 @@ class ExpressionParser {
                         ans = {};
                     ans[`:${value}`] = formationedValues[value];
                 }
+                else {
+                    // Not find.
+                    errorOn.push(`:${value}`);
+                }
             }
+        }
+        // Check if there are any elements that have not been found.
+        if (errorOn.length) {
+            throw new Error(`Can not find attributeValue -> [${errorOn.join(", ")}]`);
         }
         return ans;
     }

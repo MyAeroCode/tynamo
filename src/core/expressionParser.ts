@@ -34,9 +34,7 @@ class ExpressionParser {
                 if (givenNames && givenNames[`#${name}`]) {
                     if (!ans) ans = {};
                     ans[`#${name}`] = givenNames[`#${name}`];
-                }
-                // If find in Item.
-                else if (item[name]) {
+                } else {
                     if (!ans) ans = {};
                     ans[`#${name}`] = name;
                 }
@@ -54,6 +52,7 @@ class ExpressionParser {
         valueItem?: any | undefined
     ): AWS.DynamoDB.ExpressionAttributeValueMap | undefined {
         const values: string[] = this.parseExpressionArgument(expression, ":");
+        const errorOn: string[] = [];
         let ans: AWS.DynamoDB.ExpressionAttributeValueMap | undefined;
 
         // Assign values.
@@ -67,8 +66,16 @@ class ExpressionParser {
                     // If find in values.
                     if (!ans) ans = {};
                     ans[`:${value}`] = formationedValues[value];
+                } else {
+                    // Not find.
+                    errorOn.push(`:${value}`);
                 }
             }
+        }
+
+        // Check if there are any elements that have not been found.
+        if (errorOn.length) {
+            throw new Error(`Can not find attributeValue -> [${errorOn.join(", ")}]`);
         }
 
         return ans;
