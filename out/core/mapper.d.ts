@@ -31,8 +31,8 @@ declare class Mapper {
      *  formationEntityArray([new Cat(0, "a"), new Cat(1, "b")], Cat) =>
      *  { L :
      *      [
-     *          {id:{N : "0"}, name:{S : "a"}},
-     *          {id:{N : "1"}, name:{S : "b"}}
+     *          {M: {id:{N : "0"}, name:{S : "a"}}},
+     *          {M: {id:{N : "1"}, name:{S : "b"}}}
      *      ]
      *  }
      */
@@ -81,8 +81,8 @@ declare class Mapper {
      * For example,
      *  deformationEntityArray({ L :
      *      [
-     *          {id:{N : "0"}, name:{S : "a"}},
-     *          {id:{N : "1"}, name:{S : "b"}}
+     *          {M: {id:{N : "0"}, name:{S : "a"}}},
+     *          {M: {id:{N : "1"}, name:{S : "b"}}}
      *      ]
      *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */

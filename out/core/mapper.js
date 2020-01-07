@@ -59,14 +59,14 @@ class Mapper {
      *  formationEntityArray([new Cat(0, "a"), new Cat(1, "b")], Cat) =>
      *  { L :
      *      [
-     *          {id:{N : "0"}, name:{S : "a"}},
-     *          {id:{N : "1"}, name:{S : "b"}}
+     *          {M: {id:{N : "0"}, name:{S : "a"}}},
+     *          {M: {id:{N : "1"}, name:{S : "b"}}}
      *      ]
      *  }
      */
     formationEntityArray(entityArray, TClass) {
         return {
-            [type_1.DataType.L]: entityArray.map((v) => this.formation(v, TClass))
+            [type_1.DataType.L]: entityArray.map((v) => this.formationMap(v, TClass))
         };
     }
     /**
@@ -215,13 +215,13 @@ class Mapper {
      * For example,
      *  deformationEntityArray({ L :
      *      [
-     *          {id:{N : "0"}, name:{S : "a"}},
-     *          {id:{N : "1"}, name:{S : "b"}}
+     *          {M: {id:{N : "0"}, name:{S : "a"}}},
+     *          {M: {id:{N : "1"}, name:{S : "b"}}}
      *      ]
      *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */
     deformationEntityArray(entityArrayValue, TClass) {
-        return entityArrayValue[type_1.DataType.L].map((v) => this.deformation(v, TClass));
+        return entityArrayValue[type_1.DataType.L].map((v) => this.deformationMap(v, TClass));
     }
     /**
      * Convert (M) to entity.
