@@ -293,13 +293,17 @@ describe("basic formation/deformation", () => {
                     dat: {
                         L: [
                             {
-                                str: {
-                                    S: "aa"
+                                M: {
+                                    str: {
+                                        S: "aa"
+                                    }
                                 }
                             },
                             {
-                                str: {
-                                    S: "bb"
+                                M: {
+                                    str: {
+                                        S: "bb"
+                                    }
                                 }
                             }
                         ]

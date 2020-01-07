@@ -9,8 +9,8 @@ const metadata_1 = __importDefault(require("../core/metadata"));
  *      Add this property to metadata.
  */
 function DynamoProperty(args) {
-    return function createDynamoPropertyDecorator(TClassObject, sourcePropertyName) {
-        metadata_1.default.registProperty(TClassObject.constructor, sourcePropertyName.toString(), args);
+    return function createDynamoPropertyDecorator(TClass, sourcePropertyName) {
+        metadata_1.default.registProperty(TClass.constructor, sourcePropertyName.toString(), args);
     };
 }
 exports.DynamoProperty = DynamoProperty;

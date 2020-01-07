@@ -3,32 +3,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Default serializer.
  */
-exports.defaultSerializer = (arg) => {
-    const serialized = arg.source[arg.propertyDescriptor.sourcePropertyName];
-    return serialized;
-};
+function defaultSerializer(arg) {
+    return arg.source[arg.propertyDescriptor.sourcePropertyName];
+}
+exports.defaultSerializer = defaultSerializer;
 /**
  * Default deserializer.
  */
-exports.defaultDeserializer = (arg) => {
+function defaultDeserializer(arg) {
     return arg.dynamo[arg.propertyDescriptor.dynamoPropertyName];
-};
+}
+exports.defaultDeserializer = defaultDeserializer;
 /**
  * Get the value from chunk or value.
  *
- * @param cov Chunk or Value.
+ * @param chunk Chunk or Value.
  * @param arg Argument using in chunk.
  */
-function fetchFromChunkOrValue(cov, arg) {
-    if (cov == undefined)
-        throw new Error("not allow empty.");
-    const shadow = cov;
-    if (shadow.constructor == Function) {
-        return shadow.call(null, arg);
-    }
-    else {
-        return shadow;
-    }
+function fetchFromChunk(chunk, arg) {
+    return chunk.call(null, arg);
 }
-exports.fetchFromChunkOrValue = fetchFromChunkOrValue;
+exports.fetchFromChunk = fetchFromChunk;
 //# sourceMappingURL=utils.js.map

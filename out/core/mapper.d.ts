@@ -1,28 +1,32 @@
-import { FormationMask, PropertyDescriptor, DataType } from "./type";
-import { AttributeMap, AttributeValue } from "aws-sdk/clients/dynamodb";
+import { FormationMask, PropertyDescriptor, ClassCapture } from "./type";
+import { AttributeMap, AttributeValue, ListAttributeValue, MapAttributeValue, BinaryAttributeValue, BooleanAttributeValue } from "aws-sdk/clients/dynamodb";
+import { NumberSetAttributeValue, StringSetAttributeValue, BinarySetAttributeValue, NumberAttributeValue } from "aws-sdk/clients/dynamodbstreams";
+import { StringAttributeValue } from "aws-sdk/clients/clouddirectory";
 /**
  * Performs the interconversion between source and DynamoObject.
  */
 declare class Mapper {
-    /**
-     * Convert scalar to AttributeValue(N|S|B).
-     * (Undefined | null | EmptyString) is not allowd.
-     *
-     * For example,
-     *  formationScalar( 1 , DataType.N) => { N :  1 }
-     *  formationScalar("2", DataType.S) => { S : "2"}
-     *  formationScalar("3", DataType.B) => { B : "3"}
-     */
-    formationScalar(scalar: any, dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL): AttributeValue;
-    /**
-     * Convert scalarArray to AttributeValue(NS|SS|BS).
-     *
-     * For example,
-     *  formationScalarArray([ 1 ,  2 ], DataType.NS) => { NS : ["1", "2"] }
-     *  formationScalarArray(["3", "4"], DataType.SS) => { SS : ["3", "4"] }
-     *  formationScalarArray(["5", "6"], DataType.BS) => { BS : ["5", "6"] }
-     */
-    formationScalarArray(scalarArray: any[], dataType: DataType.NS | DataType.SS | DataType.BS): AttributeValue;
+    formationNumber(source: number): {
+        N: NumberAttributeValue;
+    };
+    formationString(source: string): {
+        S: StringAttributeValue;
+    };
+    formationBinary(source: string): {
+        B: BinaryAttributeValue;
+    };
+    formationBoolean(source: boolean): {
+        BOOL: BooleanAttributeValue;
+    };
+    formationNumberSet(source: number[]): {
+        NS: NumberSetAttributeValue;
+    };
+    formationStringSet(source: string[]): {
+        SS: StringSetAttributeValue;
+    };
+    formationBinarySet(source: string[]): {
+        BS: BinarySetAttributeValue;
+    };
     /**
      * Convert EntityArray to AttributeValue(L).
      * EntityArray should not contain scalar.
@@ -36,7 +40,9 @@ declare class Mapper {
      *      ]
      *  }
      */
-    formationEntityArray(entityArray: any[], TClass: any): AttributeValue;
+    formationList<TSource>(source: TSource[], TClass: ClassCapture<TSource>): {
+        L: ListAttributeValue;
+    };
     /**
      * Convert DynamoEntity to AttributeValue(M).
      *
@@ -47,33 +53,36 @@ declare class Mapper {
      *      name : {S : "a"}
      *  }
      */
-    formationMap(source: any, TClass: any): AttributeValue;
+    formationMap<TSource>(source: TSource, TClass: ClassCapture<TSource>): AttributeValue;
     /**
      * Formate target property using parentSource and propertyDescriptor.
      */
-    formationProperty(parent: any, propertyDescriptor: PropertyDescriptor<any>): AttributeMap;
+    formationProperty<TSource>(parent: TSource, propertyDescriptor: PropertyDescriptor<TSource, any>): AttributeMap;
     /**
      * Convert DynamoEntity to AttributeMap.
      */
-    formation<TSource>(source: TSource | undefined, RootTClass: any, formationType?: FormationMask): AttributeMap;
-    /**
-     * Convert (N|S|B) to scalar.
-     *
-     * For example,
-     *  deformationScalar({N: "3"}, DataType.N) =>  3
-     *  deformationScalar({S: "X"}, DataType.S) => "X"
-     *  deformationScalar({B: "_"}, DataType.B) => "_"
-     */
-    deformationScalar(scalarValue: AttributeValue, dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL): any;
-    /**
-     * Convert (SS|BS|SS) to scalarArray.
-     *
-     * For example,
-     *  deformationScalarArray({NS: ["1", "3", "5"]}, DataType.NS) => [ 1 ,  3 ,  5 ]
-     *  deformationScalarArray({SS: ["A", "B", "C"]}, DataType.SS) => ["A", "B", "C"]
-     *  deformationScalarArray({BS: ["a", "b", "c"]}, DataType.BS) => ["a", "b", "c"]
-     */
-    deformationScalarArray(scalarArrayValue: AttributeValue, dataType: DataType.NS | DataType.SS | DataType.BS): any[];
+    formation<TSource>(source: TSource, TClass: ClassCapture<TSource>, formationType?: FormationMask): AttributeMap;
+    deformationNumber(target: {
+        N: NumberAttributeValue;
+    }): number;
+    deformationBinary(target: {
+        B: BinaryAttributeValue;
+    }): string;
+    deformationString(target: {
+        S: StringAttributeValue;
+    }): string;
+    deformationBoolean(target: {
+        BOOL: BooleanAttributeValue;
+    }): boolean;
+    deformationNumberSet(target: {
+        NS: NumberSetAttributeValue;
+    }): number[];
+    deformationBinarySet(target: {
+        BS: BinarySetAttributeValue;
+    }): string[];
+    deformationStringSet(target: {
+        SS: StringSetAttributeValue;
+    }): string[];
     /**
      * Convert (L) to EntityArray.
      * L should have only one entity type.
@@ -86,7 +95,9 @@ declare class Mapper {
      *      ]
      *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */
-    deformationEntityArray(entityArrayValue: AttributeValue, TClass: any): any[];
+    deformationList<TTarget>(target: {
+        L: MapAttributeValue[];
+    }, TClass: ClassCapture<TTarget>): TTarget[];
     /**
      * Convert (M) to entity.
      *
@@ -100,11 +111,11 @@ declare class Mapper {
     /**
      * Deformate target property using parentAttributeMap and propertyDescriptor.
      */
-    deformationProperty(parent: AttributeMap, propertyDescriptor: PropertyDescriptor<any>): any;
+    deformationProperty<TTarget>(parent: AttributeMap, propertyDescriptor: PropertyDescriptor<TTarget, any>): TTarget;
     /**
      * Convert AttributeMap to DynamoEntity.
      */
-    deformation(target: AttributeMap, RootTClass: any): any;
+    deformation<TTarget>(target: AttributeMap, RootTClass: ClassCapture<TTarget>): TTarget;
 }
 declare const _: Mapper;
 export default _;

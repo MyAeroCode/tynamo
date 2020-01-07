@@ -11,45 +11,26 @@ const key_1 = require("./key");
  * Performs the interconversion between source and DynamoObject.
  */
 class Mapper {
-    /**
-     * Convert scalar to AttributeValue(N|S|B).
-     * (Undefined | null | EmptyString) is not allowd.
-     *
-     * For example,
-     *  formationScalar( 1 , DataType.N) => { N :  1 }
-     *  formationScalar("2", DataType.S) => { S : "2"}
-     *  formationScalar("3", DataType.B) => { B : "3"}
-     */
-    formationScalar(scalar, dataType) {
-        if (scalar === undefined || scalar === null || scalar === "")
-            throw new Error(`'${scalar}' is not allowed.`);
-        switch (dataType) {
-            case type_1.DataType.S:
-            case type_1.DataType.N:
-            case type_1.DataType.B: {
-                return {
-                    [dataType]: scalar.toString()
-                };
-            }
-            case type_1.DataType.BOOL: {
-                return {
-                    [dataType]: scalar
-                };
-            }
-        }
+    formationNumber(source) {
+        return { N: String(source) };
     }
-    /**
-     * Convert scalarArray to AttributeValue(NS|SS|BS).
-     *
-     * For example,
-     *  formationScalarArray([ 1 ,  2 ], DataType.NS) => { NS : ["1", "2"] }
-     *  formationScalarArray(["3", "4"], DataType.SS) => { SS : ["3", "4"] }
-     *  formationScalarArray(["5", "6"], DataType.BS) => { BS : ["5", "6"] }
-     */
-    formationScalarArray(scalarArray, dataType) {
-        return {
-            [dataType]: scalarArray.map((v) => v.toString())
-        };
+    formationString(source) {
+        return { S: source };
+    }
+    formationBinary(source) {
+        return { B: source };
+    }
+    formationBoolean(source) {
+        return { BOOL: source };
+    }
+    formationNumberSet(source) {
+        return { NS: source.map((v) => String(v)) };
+    }
+    formationStringSet(source) {
+        return { SS: source };
+    }
+    formationBinarySet(source) {
+        return { BS: source };
     }
     /**
      * Convert EntityArray to AttributeValue(L).
@@ -64,9 +45,9 @@ class Mapper {
      *      ]
      *  }
      */
-    formationEntityArray(entityArray, TClass) {
+    formationList(source, TClass) {
         return {
-            [type_1.DataType.L]: entityArray.map((v) => this.formationMap(v, TClass))
+            [type_1.DataType.L]: source.map((v) => this.formationMap(v, TClass))
         };
     }
     /**
@@ -90,7 +71,7 @@ class Mapper {
     formationProperty(parent, propertyDescriptor) {
         const dynamoPropertyName = propertyDescriptor.dynamoPropertyName;
         // Serialize target property.
-        const children = propertyDescriptor.serializer({
+        const serialized = propertyDescriptor.serializer({
             source: parent,
             propertyDescriptor: propertyDescriptor
         });
@@ -98,11 +79,16 @@ class Mapper {
         // Target property is null?
         // It is fine, when Target property is nullable.
         let realDataType = propertyDescriptor.dynamoDataType;
-        if (children === undefined || children === null) {
+        if (serialized === undefined || serialized === null) {
             if (propertyDescriptor.nullable)
                 realDataType = type_1.DataType.NULL;
             else
                 throw new Error(`Non-nullable property sholud not NULL or undefined`);
+        }
+        // Check)
+        // Target property is empty string?
+        if (serialized === "") {
+            throw new Error(`Empty string is not allowed.`);
         }
         // Create DynamoItem using by AttributeValue.
         function resolve(value) {
@@ -113,27 +99,25 @@ class Mapper {
         // Try formation.
         switch (realDataType) {
             case type_1.DataType.S:
+                return resolve(this.formationString(serialized));
             case type_1.DataType.N:
+                return resolve(this.formationNumber(serialized));
             case type_1.DataType.B:
-            case type_1.DataType.BOOL: {
-                return resolve(this.formationScalar(children, realDataType));
-            }
+                return resolve(this.formationBinary(serialized));
+            case type_1.DataType.BOOL:
+                return resolve(this.formationBoolean(serialized));
             case type_1.DataType.SS:
+                return resolve(this.formationStringSet(serialized));
             case type_1.DataType.NS:
-            case type_1.DataType.BS: {
-                return resolve(this.formationScalarArray(children, realDataType));
-            }
-            case type_1.DataType.L: {
-                return resolve(this.formationEntityArray(children, propertyDescriptor.sourceDataType));
-            }
-            case type_1.DataType.M: {
-                return resolve(this.formationMap(children, propertyDescriptor.sourceDataType));
-            }
-            case type_1.DataType.NULL: {
-                return resolve({
-                    NULL: true
-                });
-            }
+                return resolve(this.formationNumberSet(serialized));
+            case type_1.DataType.BS:
+                return resolve(this.formationBinarySet(serialized));
+            case type_1.DataType.L:
+                return resolve(this.formationList(serialized, propertyDescriptor.sourceDataType));
+            case type_1.DataType.M:
+                return resolve(this.formationMap(serialized, propertyDescriptor.sourceDataType));
+            case type_1.DataType.NULL:
+                return resolve({ NULL: true });
             default: {
                 throw new Error(`Can not detect DataType.`);
             }
@@ -142,13 +126,13 @@ class Mapper {
     /**
      * Convert DynamoEntity to AttributeMap.
      */
-    formation(source, RootTClass, formationType = type_1.FormationMask.Full) {
+    formation(source, TClass, formationType = type_1.FormationMask.Full) {
         // Check if, source is empty.
         if (source === undefined || source === null) {
             throw new Error(`Empty object is not allowed`);
         }
         // Simplify variable name.
-        const entityDescriptor = metadata_1.default.getEntityDescriptorByConstructor(RootTClass);
+        const entityDescriptor = metadata_1.default.getEntityDescriptorByConstructor(TClass);
         const HASH = entityDescriptor.hash;
         const RANGE = entityDescriptor.sort;
         const ATTRS = entityDescriptor.attr;
@@ -168,45 +152,26 @@ class Mapper {
         }
         return dynamo;
     }
-    /**
-     * Convert (N|S|B) to scalar.
-     *
-     * For example,
-     *  deformationScalar({N: "3"}, DataType.N) =>  3
-     *  deformationScalar({S: "X"}, DataType.S) => "X"
-     *  deformationScalar({B: "_"}, DataType.B) => "_"
-     */
-    deformationScalar(scalarValue, dataType) {
-        if (scalarValue === undefined || scalarValue === undefined) {
-            throw new Error(`'${scalarValue}' is not allowed.`);
-        }
-        switch (dataType) {
-            case type_1.DataType.S:
-            case type_1.DataType.B:
-            case type_1.DataType.BOOL:
-                return scalarValue[dataType];
-            case type_1.DataType.N:
-                return Number(scalarValue[dataType]);
-        }
+    deformationNumber(target) {
+        return Number(target.N);
     }
-    /**
-     * Convert (SS|BS|SS) to scalarArray.
-     *
-     * For example,
-     *  deformationScalarArray({NS: ["1", "3", "5"]}, DataType.NS) => [ 1 ,  3 ,  5 ]
-     *  deformationScalarArray({SS: ["A", "B", "C"]}, DataType.SS) => ["A", "B", "C"]
-     *  deformationScalarArray({BS: ["a", "b", "c"]}, DataType.BS) => ["a", "b", "c"]
-     */
-    deformationScalarArray(scalarArrayValue, dataType) {
-        switch (dataType) {
-            case type_1.DataType.SS:
-            case type_1.DataType.BS: {
-                return scalarArrayValue[dataType].map((v) => String(v));
-            }
-            case type_1.DataType.NS: {
-                return scalarArrayValue[dataType].map((v) => Number(v));
-            }
-        }
+    deformationBinary(target) {
+        return String(target.B);
+    }
+    deformationString(target) {
+        return target.S;
+    }
+    deformationBoolean(target) {
+        return target.BOOL;
+    }
+    deformationNumberSet(target) {
+        return target.NS.map((v) => Number(v));
+    }
+    deformationBinarySet(target) {
+        return target.BS.map((v) => String(v));
+    }
+    deformationStringSet(target) {
+        return target.SS;
     }
     /**
      * Convert (L) to EntityArray.
@@ -220,8 +185,8 @@ class Mapper {
      *      ]
      *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */
-    deformationEntityArray(entityArrayValue, TClass) {
-        return entityArrayValue[type_1.DataType.L].map((v) => this.deformationMap(v, TClass));
+    deformationList(target, TClass) {
+        return target[type_1.DataType.L].map((v) => this.deformationMap(v, TClass));
     }
     /**
      * Convert (M) to entity.
@@ -246,33 +211,31 @@ class Mapper {
             };
         }
         // Deserialize dynamoProperty.
-        const deserialized = utils_1.fetchFromChunkOrValue(propertyDescriptor.deserializer, {
+        const deserialized = utils_1.fetchFromChunk(propertyDescriptor.deserializer, {
             dynamo: parent,
             propertyDescriptor
         });
         // Return deformationed.
         if (deserialized.S)
-            return resolve(this.deformationScalar(deserialized, type_1.DataType.S));
+            return resolve(this.deformationString(deserialized));
         if (deserialized.N)
-            return resolve(this.deformationScalar(deserialized, type_1.DataType.N));
+            return resolve(this.deformationNumber(deserialized));
         if (deserialized.B)
-            return resolve(this.deformationScalar(deserialized, type_1.DataType.B));
+            return resolve(this.deformationBinary(deserialized));
         if (deserialized.SS)
-            return resolve(this.deformationScalarArray(deserialized, type_1.DataType.SS));
+            return resolve(this.deformationStringSet(deserialized));
         if (deserialized.NS)
-            return resolve(this.deformationScalarArray(deserialized, type_1.DataType.NS));
+            return resolve(this.deformationNumberSet(deserialized));
         if (deserialized.BS)
-            return resolve(this.deformationScalarArray(deserialized, type_1.DataType.BS));
-        if (deserialized.L) {
-            return resolve(this.deformationEntityArray(deserialized, propertyDescriptor.sourceDataType));
-        }
-        if (deserialized.M) {
-            return resolve(this.deformationMap(deserialized, propertyDescriptor.sourceDataType));
-        }
+            return resolve(this.deformationBinarySet(deserialized));
         if (deserialized.BOOL)
-            return resolve(this.deformationScalar(deserialized, type_1.DataType.BOOL));
+            return resolve(this.deformationBoolean(deserialized));
         if (deserialized.NULL)
             return resolve(undefined);
+        if (deserialized.L)
+            return resolve(this.deformationList(deserialized, propertyDescriptor.sourceDataType));
+        if (deserialized.M)
+            return resolve(this.deformationMap(deserialized, propertyDescriptor.sourceDataType));
         return deserialized;
     }
     /**

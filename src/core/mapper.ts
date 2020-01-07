@@ -1,54 +1,53 @@
-import { FormationMask, PropertyDescriptor, DataType, EntityDescriptor } from "./type";
+import { FormationMask, PropertyDescriptor, DataType, EntityDescriptor, ClassCapture } from "./type";
 import MetaData from "./metadata";
-import { fetchFromChunkOrValue } from "./utils";
-import { AttributeMap, AttributeValue } from "aws-sdk/clients/dynamodb";
+import { fetchFromChunk } from "./utils";
+import {
+    AttributeMap,
+    AttributeValue,
+    ListAttributeValue,
+    MapAttributeValue,
+    BinaryAttributeValue,
+    BooleanAttributeValue
+} from "aws-sdk/clients/dynamodb";
 import { MetaDataKey } from "./key";
+import {
+    NumberSetAttributeValue,
+    StringSetAttributeValue,
+    BinarySetAttributeValue,
+    NumberAttributeValue
+} from "aws-sdk/clients/dynamodbstreams";
+import { StringAttributeValue } from "aws-sdk/clients/clouddirectory";
 
 /**
  * Performs the interconversion between source and DynamoObject.
  */
 class Mapper {
-    /**
-     * Convert scalar to AttributeValue(N|S|B).
-     * (Undefined | null | EmptyString) is not allowd.
-     *
-     * For example,
-     *  formationScalar( 1 , DataType.N) => { N :  1 }
-     *  formationScalar("2", DataType.S) => { S : "2"}
-     *  formationScalar("3", DataType.B) => { B : "3"}
-     */
-    formationScalar(scalar: any, dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL): AttributeValue {
-        if (scalar === undefined || scalar === null || scalar === "") throw new Error(`'${scalar}' is not allowed.`);
-
-        switch (dataType) {
-            case DataType.S:
-            case DataType.N:
-            case DataType.B: {
-                return {
-                    [dataType]: scalar.toString()
-                };
-            }
-
-            case DataType.BOOL: {
-                return {
-                    [dataType]: scalar
-                };
-            }
-        }
+    formationNumber(source: number): { N: NumberAttributeValue } {
+        return { N: String(source) };
     }
 
-    /**
-     * Convert scalarArray to AttributeValue(NS|SS|BS).
-     *
-     * For example,
-     *  formationScalarArray([ 1 ,  2 ], DataType.NS) => { NS : ["1", "2"] }
-     *  formationScalarArray(["3", "4"], DataType.SS) => { SS : ["3", "4"] }
-     *  formationScalarArray(["5", "6"], DataType.BS) => { BS : ["5", "6"] }
-     */
-    formationScalarArray(scalarArray: any[], dataType: DataType.NS | DataType.SS | DataType.BS): AttributeValue {
-        return {
-            [dataType]: scalarArray.map((v) => v.toString())
-        };
+    formationString(source: string): { S: StringAttributeValue } {
+        return { S: source };
+    }
+
+    formationBinary(source: string): { B: BinaryAttributeValue } {
+        return { B: source };
+    }
+
+    formationBoolean(source: boolean): { BOOL: BooleanAttributeValue } {
+        return { BOOL: source };
+    }
+
+    formationNumberSet(source: number[]): { NS: NumberSetAttributeValue } {
+        return { NS: source.map((v) => String(v)) };
+    }
+
+    formationStringSet(source: string[]): { SS: StringSetAttributeValue } {
+        return { SS: source };
+    }
+
+    formationBinarySet(source: string[]): { BS: BinarySetAttributeValue } {
+        return { BS: source };
     }
 
     /**
@@ -64,9 +63,9 @@ class Mapper {
      *      ]
      *  }
      */
-    formationEntityArray(entityArray: any[], TClass: any): AttributeValue {
+    formationList<TSource>(source: TSource[], TClass: ClassCapture<TSource>): { L: ListAttributeValue } {
         return {
-            [DataType.L]: entityArray.map((v) => this.formationMap(v, TClass))
+            [DataType.L]: source.map((v) => this.formationMap(v, TClass))
         };
     }
 
@@ -80,7 +79,7 @@ class Mapper {
      *      name : {S : "a"}
      *  }
      */
-    formationMap(source: any, TClass: any): AttributeValue {
+    formationMap<TSource>(source: TSource, TClass: ClassCapture<TSource>): AttributeValue {
         return {
             M: this.formation(source, TClass)
         };
@@ -89,11 +88,11 @@ class Mapper {
     /**
      * Formate target property using parentSource and propertyDescriptor.
      */
-    formationProperty(parent: any, propertyDescriptor: PropertyDescriptor<any>): AttributeMap {
+    formationProperty<TSource>(parent: TSource, propertyDescriptor: PropertyDescriptor<TSource, any>): AttributeMap {
         const dynamoPropertyName: string = propertyDescriptor.dynamoPropertyName;
 
         // Serialize target property.
-        const children = propertyDescriptor.serializer({
+        const serialized = propertyDescriptor.serializer({
             source: parent,
             propertyDescriptor: propertyDescriptor
         });
@@ -102,9 +101,15 @@ class Mapper {
         // Target property is null?
         // It is fine, when Target property is nullable.
         let realDataType: DataType = propertyDescriptor.dynamoDataType;
-        if (children === undefined || children === null) {
+        if (serialized === undefined || serialized === null) {
             if (propertyDescriptor.nullable) realDataType = DataType.NULL;
             else throw new Error(`Non-nullable property sholud not NULL or undefined`);
+        }
+
+        // Check)
+        // Target property is empty string?
+        if (serialized === "") {
+            throw new Error(`Empty string is not allowed.`);
         }
 
         // Create DynamoItem using by AttributeValue.
@@ -117,32 +122,25 @@ class Mapper {
         // Try formation.
         switch (realDataType) {
             case DataType.S:
+                return resolve(this.formationString(serialized));
             case DataType.N:
+                return resolve(this.formationNumber(serialized));
             case DataType.B:
-            case DataType.BOOL: {
-                return resolve(this.formationScalar(children, realDataType));
-            }
-
+                return resolve(this.formationBinary(serialized));
+            case DataType.BOOL:
+                return resolve(this.formationBoolean(serialized));
             case DataType.SS:
+                return resolve(this.formationStringSet(serialized));
             case DataType.NS:
-            case DataType.BS: {
-                return resolve(this.formationScalarArray(children, realDataType));
-            }
-
-            case DataType.L: {
-                return resolve(this.formationEntityArray(children, propertyDescriptor.sourceDataType));
-            }
-
-            case DataType.M: {
-                return resolve(this.formationMap(children, propertyDescriptor.sourceDataType));
-            }
-
-            case DataType.NULL: {
-                return resolve({
-                    NULL: true
-                });
-            }
-
+                return resolve(this.formationNumberSet(serialized));
+            case DataType.BS:
+                return resolve(this.formationBinarySet(serialized));
+            case DataType.L:
+                return resolve(this.formationList(serialized, propertyDescriptor.sourceDataType));
+            case DataType.M:
+                return resolve(this.formationMap(serialized, propertyDescriptor.sourceDataType));
+            case DataType.NULL:
+                return resolve({ NULL: true });
             default: {
                 throw new Error(`Can not detect DataType.`);
             }
@@ -153,8 +151,8 @@ class Mapper {
      * Convert DynamoEntity to AttributeMap.
      */
     formation<TSource>(
-        source: TSource | undefined,
-        RootTClass: any,
+        source: TSource,
+        TClass: ClassCapture<TSource>,
         formationType: FormationMask = FormationMask.Full
     ): AttributeMap {
         // Check if, source is empty.
@@ -163,13 +161,13 @@ class Mapper {
         }
 
         // Simplify variable name.
-        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByConstructor(RootTClass);
+        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByConstructor(TClass);
         const HASH = entityDescriptor.hash;
         const RANGE = entityDescriptor.sort;
         const ATTRS = entityDescriptor.attr;
 
         // Apply FormationMask.
-        const targetPropertyDescriptors: PropertyDescriptor<TSource>[] = [];
+        const targetPropertyDescriptors: PropertyDescriptor<TSource, any>[] = [];
         if (formationType & FormationMask.HashKey && HASH) targetPropertyDescriptors.push(HASH);
         if (formationType & FormationMask.RangeKey && RANGE) targetPropertyDescriptors.push(RANGE);
         if (formationType & FormationMask.Body) targetPropertyDescriptors.push(...ATTRS!!.values());
@@ -183,52 +181,32 @@ class Mapper {
         return dynamo;
     }
 
-    /**
-     * Convert (N|S|B) to scalar.
-     *
-     * For example,
-     *  deformationScalar({N: "3"}, DataType.N) =>  3
-     *  deformationScalar({S: "X"}, DataType.S) => "X"
-     *  deformationScalar({B: "_"}, DataType.B) => "_"
-     */
-    deformationScalar(
-        scalarValue: AttributeValue,
-        dataType: DataType.S | DataType.N | DataType.B | DataType.BOOL
-    ): any {
-        if (scalarValue === undefined || scalarValue === undefined) {
-            throw new Error(`'${scalarValue}' is not allowed.`);
-        }
-
-        switch (dataType) {
-            case DataType.S:
-            case DataType.B:
-            case DataType.BOOL:
-                return scalarValue[dataType];
-
-            case DataType.N:
-                return Number(scalarValue[dataType]);
-        }
+    deformationNumber(target: { N: NumberAttributeValue }): number {
+        return Number(target.N);
     }
 
-    /**
-     * Convert (SS|BS|SS) to scalarArray.
-     *
-     * For example,
-     *  deformationScalarArray({NS: ["1", "3", "5"]}, DataType.NS) => [ 1 ,  3 ,  5 ]
-     *  deformationScalarArray({SS: ["A", "B", "C"]}, DataType.SS) => ["A", "B", "C"]
-     *  deformationScalarArray({BS: ["a", "b", "c"]}, DataType.BS) => ["a", "b", "c"]
-     */
-    deformationScalarArray(scalarArrayValue: AttributeValue, dataType: DataType.NS | DataType.SS | DataType.BS): any[] {
-        switch (dataType) {
-            case DataType.SS:
-            case DataType.BS: {
-                return (scalarArrayValue[dataType] as string[]).map((v) => String(v));
-            }
+    deformationBinary(target: { B: BinaryAttributeValue }): string {
+        return String(target.B);
+    }
 
-            case DataType.NS: {
-                return (scalarArrayValue[dataType] as string[]).map((v) => Number(v));
-            }
-        }
+    deformationString(target: { S: StringAttributeValue }): string {
+        return target.S;
+    }
+
+    deformationBoolean(target: { BOOL: BooleanAttributeValue }): boolean {
+        return target.BOOL;
+    }
+
+    deformationNumberSet(target: { NS: NumberSetAttributeValue }): number[] {
+        return target.NS.map((v) => Number(v));
+    }
+
+    deformationBinarySet(target: { BS: BinarySetAttributeValue }): string[] {
+        return target.BS.map((v) => String(v));
+    }
+
+    deformationStringSet(target: { SS: StringSetAttributeValue }): string[] {
+        return target.SS;
     }
 
     /**
@@ -243,8 +221,8 @@ class Mapper {
      *      ]
      *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */
-    deformationEntityArray(entityArrayValue: AttributeValue, TClass: any): any[] {
-        return (entityArrayValue[DataType.L] as any[]).map((v) => this.deformationMap(v, TClass));
+    deformationList<TTarget>(target: { L: MapAttributeValue[] }, TClass: ClassCapture<TTarget>): TTarget[] {
+        return (target[DataType.L] as any[]).map((v) => this.deformationMap(v, TClass));
     }
 
     /**
@@ -263,7 +241,7 @@ class Mapper {
     /**
      * Deformate target property using parentAttributeMap and propertyDescriptor.
      */
-    deformationProperty(parent: AttributeMap, propertyDescriptor: PropertyDescriptor<any>): any {
+    deformationProperty<TTarget>(parent: AttributeMap, propertyDescriptor: PropertyDescriptor<TTarget, any>): TTarget {
         const sourcePropertyName = propertyDescriptor.sourcePropertyName;
         function resolve(data: any): any {
             return {
@@ -272,33 +250,29 @@ class Mapper {
         }
 
         // Deserialize dynamoProperty.
-        const deserialized: AttributeMap | any = fetchFromChunkOrValue<any>(propertyDescriptor.deserializer, {
+        const deserialized: AttributeMap | any = fetchFromChunk<any, any>(propertyDescriptor.deserializer, {
             dynamo: parent,
             propertyDescriptor
         });
 
         // Return deformationed.
-        if (deserialized.S) return resolve(this.deformationScalar(deserialized, DataType.S));
-        if (deserialized.N) return resolve(this.deformationScalar(deserialized, DataType.N));
-        if (deserialized.B) return resolve(this.deformationScalar(deserialized, DataType.B));
-        if (deserialized.SS) return resolve(this.deformationScalarArray(deserialized, DataType.SS));
-        if (deserialized.NS) return resolve(this.deformationScalarArray(deserialized, DataType.NS));
-        if (deserialized.BS) return resolve(this.deformationScalarArray(deserialized, DataType.BS));
-        if (deserialized.L) {
-            return resolve(this.deformationEntityArray(deserialized, propertyDescriptor.sourceDataType));
-        }
-        if (deserialized.M) {
-            return resolve(this.deformationMap(deserialized, propertyDescriptor.sourceDataType));
-        }
-        if (deserialized.BOOL) return resolve(this.deformationScalar(deserialized, DataType.BOOL));
+        if (deserialized.S) return resolve(this.deformationString(deserialized));
+        if (deserialized.N) return resolve(this.deformationNumber(deserialized));
+        if (deserialized.B) return resolve(this.deformationBinary(deserialized));
+        if (deserialized.SS) return resolve(this.deformationStringSet(deserialized));
+        if (deserialized.NS) return resolve(this.deformationNumberSet(deserialized));
+        if (deserialized.BS) return resolve(this.deformationBinarySet(deserialized));
+        if (deserialized.BOOL) return resolve(this.deformationBoolean(deserialized));
         if (deserialized.NULL) return resolve(undefined);
+        if (deserialized.L) return resolve(this.deformationList(deserialized, propertyDescriptor.sourceDataType));
+        if (deserialized.M) return resolve(this.deformationMap(deserialized, propertyDescriptor.sourceDataType));
         return deserialized;
     }
 
     /**
      * Convert AttributeMap to DynamoEntity.
      */
-    deformation(target: AttributeMap, RootTClass: any): any {
+    deformation<TTarget>(target: AttributeMap, RootTClass: ClassCapture<TTarget>): TTarget {
         // Check if, object is empty.
         if (target === undefined) {
             throw new Error(`Empty object is not allowed`);
@@ -311,7 +285,7 @@ class Mapper {
         const entityDescriptor: EntityDescriptor<any> = MetaData.getEntityDescriptorByConstructor(holder.constructor);
 
         // Gets all field descriptor to create the Object.
-        const propertyDescriptors: PropertyDescriptor<any>[] = [];
+        const propertyDescriptors: PropertyDescriptor<TTarget, any>[] = [];
         if (entityDescriptor.hash) propertyDescriptors.push(entityDescriptor.hash);
         if (entityDescriptor.sort) propertyDescriptors.push(entityDescriptor.sort);
         if (entityDescriptor.attr) propertyDescriptors.push(...entityDescriptor.attr.values());

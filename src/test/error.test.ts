@@ -195,24 +195,6 @@ describe("error", () => {
         });
     });
 
-    it("formate number.", () => {
-        chai.assert.throws(() => {
-            Mapper.formation(777, Entity);
-        });
-    });
-
-    it("formate string.", () => {
-        chai.assert.throws(() => {
-            Mapper.formation("Hello, World!", Entity);
-        });
-    });
-
-    it("formate boolean.", () => {
-        chai.assert.throws(() => {
-            Mapper.formation(true, Entity);
-        });
-    });
-
     it("deformate undefined.", () => {
         chai.assert.throws(() => {
             Mapper.deformation(undefined as any, Entity);

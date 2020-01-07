@@ -1,17 +1,17 @@
-import { ChunkOrValue, Serializer, Deserializer } from "./type";
+import { SerializerArg, DeserializerArg, Chunk } from "./type";
 /**
  * Default serializer.
  */
-export declare const defaultSerializer: Serializer<any>;
+export declare function defaultSerializer<TSource, TParam>(arg: SerializerArg<TSource>): TParam;
 /**
  * Default deserializer.
  */
-export declare const defaultDeserializer: Deserializer<any>;
+export declare function defaultDeserializer<TSource>(arg: DeserializerArg<TSource>): Partial<TSource>;
 /**
  * Get the value from chunk or value.
  *
- * @param cov Chunk or Value.
+ * @param chunk Chunk or Value.
  * @param arg Argument using in chunk.
  */
-export declare function fetchFromChunkOrValue<TSource>(cov: ChunkOrValue<TSource, any>, arg: any): TSource;
+export declare function fetchFromChunk<TSource, TParam>(chunk: Chunk<TSource, TParam>, arg: TParam): TSource;
 //# sourceMappingURL=utils.d.ts.map

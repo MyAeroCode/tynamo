@@ -20,11 +20,10 @@ class ExpressionParser {
      * Returns ExpressionAttributeNames.
      */
     getExpressionAttributeNames(
-        expression: string,
-        item: AttributeMap,
+        expressions: string[],
         givenNames?: AWS.DynamoDB.ExpressionAttributeNameMap
     ): AWS.DynamoDB.ExpressionAttributeNameMap | undefined {
-        const names: string[] = this.parseExpressionArgument(expression, "#");
+        const names: string[] = this.parseExpressionArgument(expressions.join(";"), "#");
 
         let ans: AWS.DynamoDB.ExpressionAttributeNameMap | undefined;
         if (names.length) {
@@ -48,10 +47,10 @@ class ExpressionParser {
      * Returns ExpressionAttributeValues.
      */
     getExpressionAttributeValues(
-        expression: string,
+        expressions: string[],
         valueItem?: any | undefined
     ): AWS.DynamoDB.ExpressionAttributeValueMap | undefined {
-        const values: string[] = this.parseExpressionArgument(expression, ":");
+        const values: string[] = this.parseExpressionArgument(expressions.join(";"), ":");
         const errorOn: string[] = [];
         let ans: AWS.DynamoDB.ExpressionAttributeValueMap | undefined;
 

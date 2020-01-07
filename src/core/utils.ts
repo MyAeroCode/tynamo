@@ -1,33 +1,25 @@
-import { ChunkOrValue, Serializer, SerializerArg, Deserializer, DeserializerArg } from "./type";
+import { ChunkOrValue, Serializer, SerializerArg, Deserializer, DeserializerArg, Chunk } from "./type";
 
 /**
  * Default serializer.
  */
-export const defaultSerializer: Serializer<any> = (arg: SerializerArg<any>) => {
-    const serialized = arg.source[arg.propertyDescriptor.sourcePropertyName];
-    return serialized;
-};
+export function defaultSerializer<TSource, TParam>(arg: SerializerArg<TSource>): TParam {
+    return (arg.source as any)[arg.propertyDescriptor.sourcePropertyName];
+}
 
 /**
  * Default deserializer.
  */
-export const defaultDeserializer: Deserializer<any> = (arg: DeserializerArg): any => {
-    return arg.dynamo[arg.propertyDescriptor.dynamoPropertyName];
-};
+export function defaultDeserializer<TSource>(arg: DeserializerArg<TSource>): Partial<TSource> {
+    return arg.dynamo[arg.propertyDescriptor.dynamoPropertyName] as any;
+}
 
 /**
  * Get the value from chunk or value.
  *
- * @param cov Chunk or Value.
+ * @param chunk Chunk or Value.
  * @param arg Argument using in chunk.
  */
-export function fetchFromChunkOrValue<TSource>(cov: ChunkOrValue<TSource, any>, arg: any): TSource {
-    if (cov == undefined) throw new Error("not allow empty.");
-
-    const shadow = cov as any;
-    if (shadow.constructor == Function) {
-        return shadow.call(null, arg);
-    } else {
-        return shadow;
-    }
+export function fetchFromChunk<TSource, TParam>(chunk: Chunk<TSource, TParam>, arg: TParam): TSource {
+    return chunk.call(null, arg);
 }

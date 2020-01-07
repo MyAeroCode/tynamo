@@ -18,8 +18,8 @@ class ExpressionParser {
     /**
      * Returns ExpressionAttributeNames.
      */
-    getExpressionAttributeNames(expression, item, givenNames) {
-        const names = this.parseExpressionArgument(expression, "#");
+    getExpressionAttributeNames(expressions, givenNames) {
+        const names = this.parseExpressionArgument(expressions.join(";"), "#");
         let ans;
         if (names.length) {
             ans = {};
@@ -42,8 +42,8 @@ class ExpressionParser {
     /**
      * Returns ExpressionAttributeValues.
      */
-    getExpressionAttributeValues(expression, valueItem) {
-        const values = this.parseExpressionArgument(expression, ":");
+    getExpressionAttributeValues(expressions, valueItem) {
+        const values = this.parseExpressionArgument(expressions.join(";"), ":");
         const errorOn = [];
         let ans;
         // Assign values.

@@ -1,1 +1,1 @@
-{"version":3,"file":"dynamo-entity.d.ts","sourceRoot":"","sources":["../../src/decorator/dynamo-entity.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,gBAAgB,EAAE,MAAM,cAAc,CAAC;AAEhD;;;GAGG;AACH,wBAAgB,YAAY,CAAC,kBAAkB,CAAC,EAAE,OAAO,CAAC,gBAAgB,CAAC,yBAI1E"}
+{"version":3,"file":"dynamo-entity.d.ts","sourceRoot":"","sources":["../../src/decorator/dynamo-entity.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,gBAAgB,EAAE,YAAY,EAAE,MAAM,cAAc,CAAC;AAE9D;;;GAGG;AACH,wBAAgB,YAAY,CAAC,kBAAkB,CAAC,EAAE,OAAO,CAAC,gBAAgB,CAAC,uCAI1E"}

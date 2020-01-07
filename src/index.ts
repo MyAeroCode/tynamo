@@ -20,7 +20,15 @@ import {
     TynamoPutItemInput,
     TynamoPutItemOutput,
     TynamoGetItemInput,
-    TynamoGetItemOutput
+    TynamoGetItemOutput,
+    TynamoDeleteItemInput,
+    TynamoDeleteItemOutput,
+    TynamoUpdateItemInput,
+    TynamoUpdateItemOutput,
+    TynamoScanInput,
+    TynamoScanOutput,
+    TynamoQueryInput,
+    TynamoQueryOutput
 } from "./core/type";
 import { AttributeMap, AttributeValue } from "aws-sdk/clients/dynamodb";
 
@@ -52,5 +60,13 @@ export {
     TynamoPutItemInput,
     TynamoPutItemOutput,
     TynamoGetItemInput,
-    TynamoGetItemOutput
+    TynamoGetItemOutput,
+    TynamoDeleteItemInput,
+    TynamoDeleteItemOutput,
+    TynamoUpdateItemInput,
+    TynamoUpdateItemOutput,
+    TynamoScanInput,
+    TynamoScanOutput,
+    TynamoQueryInput,
+    TynamoQueryOutput
 };

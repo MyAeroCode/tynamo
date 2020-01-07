@@ -95,9 +95,9 @@ class Tynamo {
     putItem(tnmInput) {
         return __awaiter(this, void 0, void 0, function* () {
             // Load table info.
-            const TSourceConstructor = tnmInput.Item.constructor;
-            const formationedItem = __1.Mapper.formation(tnmInput.Item, TSourceConstructor);
-            const tableInfo = __1.MetaData.getTableInfoByConstructor(TSourceConstructor);
+            const TClass = tnmInput.Item.constructor;
+            const formationedItem = __1.Mapper.formation(tnmInput.Item, TClass);
+            const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
             // Create input.
             const input = {
                 TableName: tableInfo.TableName,
@@ -109,10 +109,15 @@ class Tynamo {
                 input.ReturnConsumedCapacity = tnmInput.ReturnConsumedCapacity;
             if (tnmInput.ReturnValues)
                 input.ReturnValues = tnmInput.ReturnValues;
+            // Parse expression.
+            const exps = [];
             if (tnmInput.ConditionExpression) {
+                exps.push(tnmInput.ConditionExpression);
                 input.ConditionExpression = tnmInput.ConditionExpression;
-                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(tnmInput.ConditionExpression, formationedItem, tnmInput.ExpressionAttributeNames);
-                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(tnmInput.ConditionExpression, tnmInput.ValueItem);
+            }
+            if (exps.length) {
+                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(exps, tnmInput.ExpressionAttributeNames);
+                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(exps, tnmInput.ExpressionAttributeValues);
             }
             // Call DynamoDB API.
             const connection = this.connection;
@@ -121,7 +126,7 @@ class Tynamo {
                     const result = yield connection.putItem(input).promise();
                     resolve({
                         $response: result.$response,
-                        Attributes: result.Attributes ? __1.Mapper.deformation(result.Attributes, TSourceConstructor) : undefined,
+                        Attributes: result.Attributes ? __1.Mapper.deformation(result.Attributes, TClass) : undefined,
                         ConsumedCapacity: result.ConsumedCapacity,
                         ItemCollectionMetrics: result.ItemCollectionMetrics
                     });
@@ -135,9 +140,9 @@ class Tynamo {
     getItem(tnmInput) {
         return __awaiter(this, void 0, void 0, function* () {
             // Load table info.
-            const TSourceConstructor = tnmInput.Key.constructor;
-            const formationedKey = __1.Mapper.formation(tnmInput.Key, TSourceConstructor, type_1.FormationMask.KeyOnly);
-            const tableInfo = __1.MetaData.getTableInfoByConstructor(TSourceConstructor);
+            const TClass = tnmInput.Key.constructor;
+            const formationedKey = __1.Mapper.formation(tnmInput.Key, TClass, type_1.FormationMask.KeyOnly);
+            const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
             // Create input.
             const input = {
                 TableName: tableInfo.TableName,
@@ -147,9 +152,14 @@ class Tynamo {
                 input.ConsistentRead = tnmInput.ConsistentRead;
             if (tnmInput.ReturnConsumedCapacity)
                 input.ReturnConsumedCapacity = tnmInput.ReturnConsumedCapacity;
+            // Parse expression.
+            const exps = [];
             if (tnmInput.ProjectionExpression) {
+                exps.push(tnmInput.ProjectionExpression);
                 input.ProjectionExpression = tnmInput.ProjectionExpression;
-                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(input.ProjectionExpression, formationedKey, tnmInput.ExpressionAttributeNames);
+            }
+            if (exps.length) {
+                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(exps, tnmInput.ExpressionAttributeNames);
             }
             // Call DynamoDB API.
             const connection = this.connection;
@@ -157,7 +167,217 @@ class Tynamo {
                 return __awaiter(this, void 0, void 0, function* () {
                     const result = yield connection.getItem(input).promise();
                     resolve({
-                        Item: result.Item ? __1.Mapper.deformation(result.Item, TSourceConstructor) : undefined,
+                        $response: result.$response,
+                        Item: result.Item ? __1.Mapper.deformation(result.Item, TClass) : undefined,
+                        ConsumedCapacity: result.ConsumedCapacity
+                    });
+                });
+            });
+        });
+    }
+    /**
+     * Delete item with conditional expression.
+     */
+    deleteItem(tnmInput) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Load table info.
+            const TClass = tnmInput.Key.constructor;
+            const formationedKey = __1.Mapper.formation(tnmInput.Key, TClass, type_1.FormationMask.KeyOnly);
+            const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
+            // Create input.
+            const input = {
+                TableName: tableInfo.TableName,
+                Key: formationedKey
+            };
+            if (tnmInput.ReturnConsumedCapacity)
+                input.ReturnConsumedCapacity = tnmInput.ReturnConsumedCapacity;
+            if (tnmInput.ReturnItemCollectionMetrics)
+                input.ReturnConsumedCapacity = tnmInput.ReturnItemCollectionMetrics;
+            if (tnmInput.ReturnValues)
+                input.ReturnValues = tnmInput.ReturnValues;
+            // Parse expression.
+            const exps = [];
+            if (tnmInput.ConditionExpression) {
+                exps.push(tnmInput.ConditionExpression);
+                input.ConditionExpression = tnmInput.ConditionExpression;
+            }
+            if (exps.length) {
+                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(exps, tnmInput.ExpressionAttributeNames);
+                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(exps, tnmInput.ExpressionAttributeValues);
+            }
+            // Call DynamoDB API.
+            const connection = this.connection;
+            return new Promise(function (resolve) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const result = yield connection.deleteItem(input).promise();
+                    resolve({
+                        $response: result.$response,
+                        Attributes: result.Attributes ? __1.Mapper.deformation(result.Attributes, TClass) : undefined,
+                        ConsumedCapacity: result.ConsumedCapacity,
+                        ItemCollectionMetrics: result.ItemCollectionMetrics
+                    });
+                });
+            });
+        });
+    }
+    updateItem(tnmInput) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Load table info.
+            const TClass = tnmInput.Key.constructor;
+            const formationedKey = __1.Mapper.formation(tnmInput.Key, TClass, type_1.FormationMask.KeyOnly);
+            const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
+            // Create input.
+            const input = {
+                TableName: tableInfo.TableName,
+                Key: formationedKey
+            };
+            if (tnmInput.ReturnConsumedCapacity)
+                input.ReturnConsumedCapacity = tnmInput.ReturnConsumedCapacity;
+            if (tnmInput.ReturnItemCollectionMetrics)
+                input.ReturnItemCollectionMetrics = tnmInput.ReturnItemCollectionMetrics;
+            if (tnmInput.ReturnValues)
+                input.ReturnValues = tnmInput.ReturnValues;
+            // Parse expression.
+            const exps = [];
+            if (tnmInput.ConditionExpression) {
+                exps.push(tnmInput.ConditionExpression);
+                input.ConditionExpression = tnmInput.ConditionExpression;
+            }
+            if (tnmInput.UpdateExpression) {
+                exps.push(tnmInput.UpdateExpression);
+                input.UpdateExpression = tnmInput.UpdateExpression;
+            }
+            if (exps.length) {
+                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(exps, tnmInput.ExpressionAttributeNames);
+                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(exps, tnmInput.ExpressionAttributeValues);
+            }
+            // Call DynamoDB API.
+            const connection = this.connection;
+            return new Promise(function (resolve) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const result = yield connection.updateItem(input).promise();
+                    resolve({
+                        $response: result.$response,
+                        Attributes: result.Attributes ? __1.Mapper.deformation(result.Attributes, TClass) : undefined,
+                        ConsumedCapacity: result.ConsumedCapacity,
+                        ItemCollectionMetrics: result.ItemCollectionMetrics
+                    });
+                });
+            });
+        });
+    }
+    /**
+     * Scan table with filter, projection expressions.
+     */
+    scan(TClass, tnmInput = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Load table info.
+            const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
+            // Create input.
+            const input = {
+                TableName: tableInfo.TableName
+            };
+            if (tnmInput.ConsistentRead)
+                input.ConsistentRead = tnmInput.ConsistentRead;
+            if (tnmInput.ExclusiveStartKey)
+                input.ExclusiveStartKey = __1.Mapper.formation(tnmInput.ExclusiveStartKey, TClass);
+            if (tnmInput.IndexName)
+                input.IndexName = tnmInput.IndexName;
+            if (tnmInput.Limit)
+                input.Limit = tnmInput.Limit;
+            if (tnmInput.ReturnConsumedCapacity)
+                input.ReturnConsumedCapacity = tnmInput.ReturnConsumedCapacity;
+            if (tnmInput.Segment)
+                input.Segment = tnmInput.Segment;
+            if (tnmInput.Select)
+                input.Select = tnmInput.Select;
+            if (tnmInput.TotalSegments)
+                input.TotalSegments = tnmInput.TotalSegments;
+            // Parse expressions.
+            const exps = [];
+            if (tnmInput.FilterExpression) {
+                exps.push(tnmInput.FilterExpression);
+                input.FilterExpression = tnmInput.FilterExpression;
+            }
+            if (tnmInput.ProjectionExpression) {
+                exps.push(tnmInput.ProjectionExpression);
+                input.ProjectionExpression = tnmInput.ProjectionExpression;
+            }
+            if (exps.length) {
+                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(exps, tnmInput.ExpressionAttributeNames);
+                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(exps, tnmInput.ExpressionAttributeValues);
+            }
+            // Call DynamoDB API.
+            const connection = this.connection;
+            return new Promise(function (resolve) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const result = yield connection.scan(input).promise();
+                    resolve({
+                        $response: result.$response,
+                        Items: result.Items ? result.Items.map((v) => __1.Mapper.deformation(v, TClass)) : result.Items,
+                        Count: result.Count,
+                        ScannedCount: result.ScannedCount,
+                        LastEvaluatedKey: result.LastEvaluatedKey
+                            ? __1.Mapper.deformation(result.LastEvaluatedKey, TClass)
+                            : result.LastEvaluatedKey,
+                        ConsumedCapacity: result.ConsumedCapacity
+                    });
+                });
+            });
+        });
+    }
+    /**
+     * Query table with filter, projection expressions.
+     */
+    query(TClass, tnmInput) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Load table info.
+            const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
+            // Create input.
+            const input = {
+                TableName: tableInfo.TableName
+            };
+            if (tnmInput.ScanIndexForward)
+                input.ScanIndexForward = tnmInput.ScanIndexForward;
+            if (tnmInput.ConsistentRead)
+                input.ConsistentRead = tnmInput.ConsistentRead;
+            if (tnmInput.ExclusiveStartKey)
+                input.ExclusiveStartKey = __1.Mapper.formation(tnmInput.ExclusiveStartKey, TClass);
+            if (tnmInput.IndexName)
+                input.IndexName = tnmInput.IndexName;
+            if (tnmInput.Limit)
+                input.Limit = tnmInput.Limit;
+            if (tnmInput.ReturnConsumedCapacity)
+                input.ReturnConsumedCapacity = tnmInput.ReturnConsumedCapacity;
+            if (tnmInput.Select)
+                input.Select = tnmInput.Select;
+            // Parse expression.
+            const exps = [];
+            if (tnmInput.FilterExpression) {
+                exps.push(tnmInput.FilterExpression);
+                input.FilterExpression = tnmInput.FilterExpression;
+            }
+            if (tnmInput.ProjectionExpression) {
+                exps.push(tnmInput.ProjectionExpression);
+                input.ProjectionExpression = tnmInput.ProjectionExpression;
+            }
+            if (exps.length) {
+                input.ExpressionAttributeNames = expressionParser_1.default.getExpressionAttributeNames(exps, tnmInput.ExpressionAttributeNames);
+                input.ExpressionAttributeValues = expressionParser_1.default.getExpressionAttributeValues(exps, tnmInput.ExpressionAttributeValues);
+            }
+            // Call DynamoDB API.
+            const connection = this.connection;
+            return new Promise(function (resolve) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const result = yield connection.query(input).promise();
+                    resolve({
+                        $response: result.$response,
+                        Items: result.Items ? result.Items.map((v) => __1.Mapper.deformation(v, TClass)) : result.Items,
+                        Count: result.Count,
+                        ScannedCount: result.ScannedCount,
+                        LastEvaluatedKey: result.LastEvaluatedKey
+                            ? __1.Mapper.deformation(result.LastEvaluatedKey, TClass)
+                            : result.LastEvaluatedKey,
                         ConsumedCapacity: result.ConsumedCapacity
                     });
                 });
