@@ -70,3 +70,17 @@ export {
     TynamoQueryInput,
     TynamoQueryOutput
 };
+
+@DynamoEntity()
+class Cat {
+    @DynamoProperty({ keyType: KeyType.hash })
+    id!: number;
+
+    @DynamoProperty({ keyType: KeyType.attr })
+    name!: string;
+
+    constructor(id: number, name: string) {
+        this.id = id;
+        this.name = name;
+    }
+}

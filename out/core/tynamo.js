@@ -93,10 +93,11 @@ class Tynamo {
      * Put item with conditional expression.
      */
     putItem(tnmInput) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             // Check param.
             if (tnmInput.Item.constructor === Object ||
-                tnmInput.ExpressionAttributeValues.constructor === Object) {
+                ((_a = tnmInput.ExpressionAttributeValues) === null || _a === void 0 ? void 0 : _a.constructor) === Object) {
                 throw new Error(`Must use constructor`);
             }
             // Load table info.
@@ -188,10 +189,11 @@ class Tynamo {
      * Delete item with conditional expression.
      */
     deleteItem(tnmInput) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             // Check param.
             if (tnmInput.Key.constructor === Object ||
-                tnmInput.ExpressionAttributeValues.constructor === Object) {
+                ((_a = tnmInput.ExpressionAttributeValues) === null || _a === void 0 ? void 0 : _a.constructor) === Object) {
                 throw new Error(`Must use constructor`);
             }
             // Load table info.
@@ -235,10 +237,11 @@ class Tynamo {
         });
     }
     updateItem(tnmInput) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             // Check param.
             if (tnmInput.Key.constructor === Object ||
-                tnmInput.ExpressionAttributeValues.constructor === Object) {
+                ((_a = tnmInput.ExpressionAttributeValues) === null || _a === void 0 ? void 0 : _a.constructor) === Object) {
                 throw new Error(`Must use constructor`);
             }
             // Load table info.
@@ -289,9 +292,10 @@ class Tynamo {
      * Scan table with filter, projection expressions.
      */
     scan(TClass, tnmInput = {}) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             // Check param.
-            if (tnmInput.ExpressionAttributeValues.constructor === Object) {
+            if (((_a = tnmInput.ExpressionAttributeValues) === null || _a === void 0 ? void 0 : _a.constructor) === Object) {
                 throw new Error(`Must use constructor`);
             }
             // Load table info.
@@ -353,9 +357,10 @@ class Tynamo {
      * Query table with filter, projection expressions.
      */
     query(TClass, tnmInput) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             // Check param.
-            if (tnmInput.ExpressionAttributeValues.constructor === Object) {
+            if (((_a = tnmInput.ExpressionAttributeValues) === null || _a === void 0 ? void 0 : _a.constructor) === Object) {
                 throw new Error(`Must use constructor`);
             }
             // Load table info.

@@ -130,7 +130,7 @@ export default class Tynamo {
         // Check param.
         if (
             (tnmInput.Item as any).constructor === Object ||
-            (tnmInput.ExpressionAttributeValues as any).constructor === Object
+            (tnmInput.ExpressionAttributeValues as any)?.constructor === Object
         ) {
             throw new Error(`Must use constructor`);
         }
@@ -235,7 +235,7 @@ export default class Tynamo {
         // Check param.
         if (
             (tnmInput.Key as any).constructor === Object ||
-            (tnmInput.ExpressionAttributeValues as any).constructor === Object
+            (tnmInput.ExpressionAttributeValues as any)?.constructor === Object
         ) {
             throw new Error(`Must use constructor`);
         }
@@ -288,7 +288,7 @@ export default class Tynamo {
         // Check param.
         if (
             (tnmInput.Key as any).constructor === Object ||
-            (tnmInput.ExpressionAttributeValues as any).constructor === Object
+            (tnmInput.ExpressionAttributeValues as any)?.constructor === Object
         ) {
             throw new Error(`Must use constructor`);
         }
@@ -350,7 +350,7 @@ export default class Tynamo {
         tnmInput: TynamoScanInput<TSource> = {}
     ): Promise<TynamoScanOutput<TSource>> {
         // Check param.
-        if ((tnmInput.ExpressionAttributeValues as any).constructor === Object) {
+        if ((tnmInput.ExpressionAttributeValues as any)?.constructor === Object) {
             throw new Error(`Must use constructor`);
         }
 
@@ -416,7 +416,7 @@ export default class Tynamo {
         tnmInput: TynamoQueryInput<TSource>
     ): Promise<TynamoQueryOutput<TSource>> {
         // Check param.
-        if ((tnmInput.ExpressionAttributeValues as any).constructor === Object) {
+        if ((tnmInput.ExpressionAttributeValues as any)?.constructor === Object) {
             throw new Error(`Must use constructor`);
         }
 
