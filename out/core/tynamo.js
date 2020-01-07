@@ -94,6 +94,11 @@ class Tynamo {
      */
     putItem(tnmInput) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Check param.
+            if (tnmInput.Item.constructor === Object ||
+                tnmInput.ExpressionAttributeValues.constructor === Object) {
+                throw new Error(`Must use constructor`);
+            }
             // Load table info.
             const TClass = tnmInput.Item.constructor;
             const formationedItem = __1.Mapper.formation(tnmInput.Item, TClass);
@@ -139,6 +144,10 @@ class Tynamo {
      */
     getItem(tnmInput) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Check param.
+            if (tnmInput.Key.constructor === Object) {
+                throw new Error(`Must use constructor`);
+            }
             // Load table info.
             const TClass = tnmInput.Key.constructor;
             const formationedKey = __1.Mapper.formation(tnmInput.Key, TClass, type_1.FormationMask.KeyOnly);
@@ -180,6 +189,11 @@ class Tynamo {
      */
     deleteItem(tnmInput) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Check param.
+            if (tnmInput.Key.constructor === Object ||
+                tnmInput.ExpressionAttributeValues.constructor === Object) {
+                throw new Error(`Must use constructor`);
+            }
             // Load table info.
             const TClass = tnmInput.Key.constructor;
             const formationedKey = __1.Mapper.formation(tnmInput.Key, TClass, type_1.FormationMask.KeyOnly);
@@ -222,6 +236,11 @@ class Tynamo {
     }
     updateItem(tnmInput) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Check param.
+            if (tnmInput.Key.constructor === Object ||
+                tnmInput.ExpressionAttributeValues.constructor === Object) {
+                throw new Error(`Must use constructor`);
+            }
             // Load table info.
             const TClass = tnmInput.Key.constructor;
             const formationedKey = __1.Mapper.formation(tnmInput.Key, TClass, type_1.FormationMask.KeyOnly);
@@ -271,6 +290,10 @@ class Tynamo {
      */
     scan(TClass, tnmInput = {}) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Check param.
+            if (tnmInput.ExpressionAttributeValues.constructor === Object) {
+                throw new Error(`Must use constructor`);
+            }
             // Load table info.
             const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
             // Create input.
@@ -331,6 +354,10 @@ class Tynamo {
      */
     query(TClass, tnmInput) {
         return __awaiter(this, void 0, void 0, function* () {
+            // Check param.
+            if (tnmInput.ExpressionAttributeValues.constructor === Object) {
+                throw new Error(`Must use constructor`);
+            }
             // Load table info.
             const tableInfo = __1.MetaData.getTableInfoByConstructor(TClass);
             // Create input.

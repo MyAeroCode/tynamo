@@ -127,8 +127,16 @@ export default class Tynamo {
      * Put item with conditional expression.
      */
     async putItem<TSource>(tnmInput: TynamoPutItemInput<TSource>): Promise<TynamoPutItemOutput<TSource>> {
+        // Check param.
+        if (
+            (tnmInput.Item as any).constructor === Object ||
+            (tnmInput.ExpressionAttributeValues as any).constructor === Object
+        ) {
+            throw new Error(`Must use constructor`);
+        }
+
         // Load table info.
-        const TClass: ClassCapture<TSource> = tnmInput.Item.constructor;
+        const TClass = (tnmInput.Item as any).constructor;
         const formationedItem: AttributeMap = Mapper.formation(tnmInput.Item, TClass);
         const tableInfo: TableInformation = MetaData.getTableInfoByConstructor(TClass);
 
@@ -176,8 +184,13 @@ export default class Tynamo {
      * Put item with projection expression.
      */
     async getItem<TSource>(tnmInput: TynamoGetItemInput<TSource>): Promise<TynamoGetItemOutput<TSource>> {
+        // Check param.
+        if ((tnmInput.Key as any).constructor === Object) {
+            throw new Error(`Must use constructor`);
+        }
+
         // Load table info.
-        const TClass: ClassCapture<TSource> = tnmInput.Key.constructor;
+        const TClass = (tnmInput.Key as any).constructor;
         const formationedKey: AttributeMap = Mapper.formation(tnmInput.Key, TClass, FormationMask.KeyOnly);
         const tableInfo: TableInformation = MetaData.getTableInfoByConstructor(TClass);
 
@@ -188,6 +201,7 @@ export default class Tynamo {
         };
         if (tnmInput.ConsistentRead) input.ConsistentRead = tnmInput.ConsistentRead;
         if (tnmInput.ReturnConsumedCapacity) input.ReturnConsumedCapacity = tnmInput.ReturnConsumedCapacity;
+
         // Parse expression.
         const exps: string[] = [];
         if (tnmInput.ProjectionExpression) {
@@ -218,8 +232,16 @@ export default class Tynamo {
      * Delete item with conditional expression.
      */
     async deleteItem<TSource>(tnmInput: TynamoDeleteItemInput<TSource>): Promise<TynamoDeleteItemOutput<TSource>> {
+        // Check param.
+        if (
+            (tnmInput.Key as any).constructor === Object ||
+            (tnmInput.ExpressionAttributeValues as any).constructor === Object
+        ) {
+            throw new Error(`Must use constructor`);
+        }
+
         // Load table info.
-        const TClass: ClassCapture<TSource> = tnmInput.Key.constructor;
+        const TClass = (tnmInput.Key as any).constructor;
         const formationedKey: AttributeMap = Mapper.formation(tnmInput.Key, TClass, FormationMask.KeyOnly);
         const tableInfo: TableInformation = MetaData.getTableInfoByConstructor(TClass);
 
@@ -263,8 +285,16 @@ export default class Tynamo {
     }
 
     async updateItem<TSource>(tnmInput: TynamoUpdateItemInput<TSource>): Promise<TynamoUpdateItemOutput<TSource>> {
+        // Check param.
+        if (
+            (tnmInput.Key as any).constructor === Object ||
+            (tnmInput.ExpressionAttributeValues as any).constructor === Object
+        ) {
+            throw new Error(`Must use constructor`);
+        }
+
         // Load table info.
-        const TClass: ClassCapture<TSource> = tnmInput.Key.constructor;
+        const TClass = (tnmInput.Key as any).constructor;
         const formationedKey: AttributeMap = Mapper.formation(tnmInput.Key, TClass, FormationMask.KeyOnly);
         const tableInfo: TableInformation = MetaData.getTableInfoByConstructor(TClass);
 
@@ -319,6 +349,11 @@ export default class Tynamo {
         TClass: ClassCapture<TSource>,
         tnmInput: TynamoScanInput<TSource> = {}
     ): Promise<TynamoScanOutput<TSource>> {
+        // Check param.
+        if ((tnmInput.ExpressionAttributeValues as any).constructor === Object) {
+            throw new Error(`Must use constructor`);
+        }
+
         // Load table info.
         const tableInfo: TableInformation = MetaData.getTableInfoByConstructor(TClass);
 
@@ -380,6 +415,11 @@ export default class Tynamo {
         TClass: ClassCapture<TSource>,
         tnmInput: TynamoQueryInput<TSource>
     ): Promise<TynamoQueryOutput<TSource>> {
+        // Check param.
+        if ((tnmInput.ExpressionAttributeValues as any).constructor === Object) {
+            throw new Error(`Must use constructor`);
+        }
+
         // Load table info.
         const tableInfo: TableInformation = MetaData.getTableInfoByConstructor(TClass);
 

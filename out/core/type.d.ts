@@ -4,11 +4,6 @@ export declare type ChunkOrValue<TSource, TArg> = TSource | Chunk<TSource, TArg>
 export declare type ClassCapture<T> = {
     new (...args: any[]): T;
 };
-export declare type CreatedByConstructor<T> = {
-    [P in keyof T]: T[P];
-} & {
-    constructor: ClassCapture<T>;
-};
 export declare enum DataType {
     S = "S",
     N = "N",
@@ -79,12 +74,12 @@ export interface TableInformation {
     Tags?: TagList;
 }
 export interface TynamoPutItemInput<TSource> {
-    Item: CreatedByConstructor<TSource>;
+    Item: TSource;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ReturnItemCollectionMetrics?: ReturnItemCollectionMetrics;
     ExpressionAttributeNames?: ExpressionAttributeNameMap;
-    ExpressionAttributeValues?: CreatedByConstructor<any>;
+    ExpressionAttributeValues?: any;
     ConditionExpression?: ConditionExpression;
 }
 export interface TynamoPutItemOutput<TSource> {
@@ -94,7 +89,7 @@ export interface TynamoPutItemOutput<TSource> {
     ItemCollectionMetrics?: ItemCollectionMetrics;
 }
 export interface TynamoGetItemInput<TSource> {
-    Key: CreatedByConstructor<TSource>;
+    Key: TSource;
     ConsistentRead?: ConsistentRead;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ProjectionExpression?: ProjectionExpression;
@@ -106,8 +101,8 @@ export interface TynamoGetItemOutput<TSource> {
     ConsumedCapacity?: ConsumedCapacity;
 }
 export interface TynamoDeleteItemInput<TSource> {
-    Key: CreatedByConstructor<TSource>;
-    ExpressionAttributeValues?: CreatedByConstructor<any>;
+    Key: TSource;
+    ExpressionAttributeValues?: any;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ReturnItemCollectionMetrics?: ReturnItemCollectionMetrics;
@@ -121,14 +116,14 @@ export interface TynamoDeleteItemOutput<TSource> {
     ItemCollectionMetrics?: ItemCollectionMetrics;
 }
 export interface TynamoUpdateItemInput<TSource> {
-    Key: CreatedByConstructor<TSource>;
+    Key: TSource;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ReturnItemCollectionMetrics?: ReturnItemCollectionMetrics;
     ConditionExpression?: ConditionExpression;
     UpdateExpression?: UpdateExpression;
     ExpressionAttributeNames?: ExpressionAttributeNameMap;
-    ExpressionAttributeValues?: CreatedByConstructor<any>;
+    ExpressionAttributeValues?: any;
 }
 export interface TynamoUpdateItemOutput<TSource> {
     $response: AWS.Response<UpdateItemOutput, AWS.AWSError>;
@@ -147,7 +142,7 @@ export interface TynamoScanInput<TSource> {
     ProjectionExpression?: ProjectionExpression;
     FilterExpression?: ConditionExpression;
     ExpressionAttributeNames?: ExpressionAttributeNameMap;
-    ExpressionAttributeValues?: CreatedByConstructor<any>;
+    ExpressionAttributeValues?: any;
     ConsistentRead?: ConsistentRead;
 }
 export interface TynamoScanOutput<TSource> {
