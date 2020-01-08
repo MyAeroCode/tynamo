@@ -79,7 +79,7 @@ class Mapper {
      *      name : {S : "a"}
      *  }
      */
-    formationMap<TSource>(source: TSource, TClass: ClassCapture<TSource>): AttributeValue {
+    formationMap<TSource>(source: TSource, TClass: ClassCapture<TSource>): { M: MapAttributeValue } {
         return {
             M: this.formation(source, TClass)
         };
@@ -234,8 +234,8 @@ class Mapper {
      *      name : {S : "a"}
      *  }, Cat) => new Cat(0, "a")
      */
-    deformationMap(dynamo: AttributeValue, TClass: any): any {
-        return this.deformation(dynamo.M!!, TClass);
+    deformationMap<TTarget>(target: { M: MapAttributeValue }, TClass: ClassCapture<TTarget>): TTarget {
+        return this.deformation(target.M, TClass);
     }
 
     /**

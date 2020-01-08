@@ -1,5 +1,5 @@
 import { FormationMask, PropertyDescriptor, ClassCapture } from "./type";
-import { AttributeMap, AttributeValue, ListAttributeValue, MapAttributeValue, BinaryAttributeValue, BooleanAttributeValue } from "aws-sdk/clients/dynamodb";
+import { AttributeMap, ListAttributeValue, MapAttributeValue, BinaryAttributeValue, BooleanAttributeValue } from "aws-sdk/clients/dynamodb";
 import { NumberSetAttributeValue, StringSetAttributeValue, BinarySetAttributeValue, NumberAttributeValue } from "aws-sdk/clients/dynamodbstreams";
 import { StringAttributeValue } from "aws-sdk/clients/clouddirectory";
 /**
@@ -53,7 +53,9 @@ declare class Mapper {
      *      name : {S : "a"}
      *  }
      */
-    formationMap<TSource>(source: TSource, TClass: ClassCapture<TSource>): AttributeValue;
+    formationMap<TSource>(source: TSource, TClass: ClassCapture<TSource>): {
+        M: MapAttributeValue;
+    };
     /**
      * Formate target property using parentSource and propertyDescriptor.
      */
@@ -107,7 +109,9 @@ declare class Mapper {
      *      name : {S : "a"}
      *  }, Cat) => new Cat(0, "a")
      */
-    deformationMap(dynamo: AttributeValue, TClass: any): any;
+    deformationMap<TTarget>(target: {
+        M: MapAttributeValue;
+    }, TClass: ClassCapture<TTarget>): TTarget;
     /**
      * Deformate target property using parentAttributeMap and propertyDescriptor.
      */

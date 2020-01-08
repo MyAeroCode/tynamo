@@ -197,8 +197,8 @@ class Mapper {
      *      name : {S : "a"}
      *  }, Cat) => new Cat(0, "a")
      */
-    deformationMap(dynamo, TClass) {
-        return this.deformation(dynamo.M, TClass);
+    deformationMap(target, TClass) {
+        return this.deformation(target.M, TClass);
     }
     /**
      * Deformate target property using parentAttributeMap and propertyDescriptor.
