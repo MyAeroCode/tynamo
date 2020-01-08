@@ -4,7 +4,7 @@
     "main": "out/index.js",
     "types": "out/index.d.ts",
     "scripts": {
-        "test": "mocha -r ts-node/register ./**/*.test.ts",
+        "test": "mocha -r ts-node/register ./**/*.test.ts --timeout 60000",
         "build": "tsc"
     },
     "keywords": [
@@ -29,6 +29,8 @@
     },
     "dependencies": {
         "aws-sdk": "^2.597.0",
+        "class-transformer": "^0.2.3",
+        "es6-shim": "^0.35.5",
         "reflect-metadata": "^0.1.13"
     },
     "prettier": {

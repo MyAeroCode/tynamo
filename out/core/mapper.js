@@ -132,7 +132,7 @@ class Mapper {
             throw new Error(`Empty object is not allowed`);
         }
         // Simplify variable name.
-        const entityDescriptor = metadata_1.default.getEntityDescriptorByConstructor(TClass);
+        const entityDescriptor = metadata_1.default.getEntityDescriptorByTClass(TClass);
         const HASH = entityDescriptor.hash;
         const RANGE = entityDescriptor.sort;
         const ATTRS = entityDescriptor.attr;
@@ -250,7 +250,7 @@ class Mapper {
         // Is it registered in the metadata?
         const TClass = Reflect.getMetadata(key_1.MetaDataKey.TClass, RootTClass);
         const holder = new TClass();
-        const entityDescriptor = metadata_1.default.getEntityDescriptorByConstructor(holder.constructor);
+        const entityDescriptor = metadata_1.default.getEntityDescriptorByTClass(holder.constructor);
         // Gets all field descriptor to create the Object.
         const propertyDescriptors = [];
         if (entityDescriptor.hash)

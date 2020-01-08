@@ -1,7 +1,8 @@
-import { AttributeMap, TableName, LocalSecondaryIndexList, GlobalSecondaryIndexList, BillingMode, ProvisionedThroughput, StreamSpecification, SSESpecification, TagList, ReturnValue, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ConditionExpression, ExpressionAttributeNameMap, ExpressionAttributeValueMap, ConsistentRead, ProjectionExpression, ConsumedCapacity, ItemCollectionMetrics, PutItemOutput, DeleteItemOutput, UpdateExpression, UpdateItemOutput, IndexName, PositiveIntegerObject, Select, ScanTotalSegments, ScanSegment, Integer, ScanOutput, BooleanObject, KeyExpression, QueryOutput } from "aws-sdk/clients/dynamodb";
+import { AttributeMap, TableName, LocalSecondaryIndexList, GlobalSecondaryIndexList, BillingMode, ProvisionedThroughput, StreamSpecification, SSESpecification, TagList, ReturnValue, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ConditionExpression, ExpressionAttributeNameMap, ExpressionAttributeValueMap, ConsistentRead, ProjectionExpression, ConsumedCapacity, ItemCollectionMetrics, PutItemOutput, DeleteItemOutput, UpdateExpression, UpdateItemOutput, IndexName, PositiveIntegerObject, Select, ScanTotalSegments, ScanSegment, Integer, ScanOutput, BooleanObject, KeyExpression, QueryOutput, ConsumedCapacityMultiple, BatchGetItemOutput, ItemCollectionMetricsPerTable, BatchWriteItemOutput } from "aws-sdk/clients/dynamodb";
+import { Response, AWSError } from "aws-sdk";
 export declare type Chunk<TReturn, TArg> = (arg: TArg) => TReturn;
 export declare type ChunkOrValue<TSource, TArg> = TSource | Chunk<TSource, TArg>;
-export declare type ClassCapture<T> = {
+export declare type ClassCapture<T extends {}> = {
     new (...args: any[]): T;
 };
 export declare enum DataType {
@@ -73,6 +74,22 @@ export interface TableInformation {
     SSESpecification?: SSESpecification;
     Tags?: TagList;
 }
+export interface TynamoExpressionInput {
+    ExpressionAttributeNames?: ExpressionAttributeNameMap;
+    ExpressionAttributeValues?: any;
+    ConditionExpression?: ConditionExpression;
+    ProjectionExpression?: ProjectionExpression;
+    UpdateExpression?: UpdateExpression;
+    FilterExpression?: ConditionExpression;
+}
+export interface TynamoExpressionOutput {
+    ExpressionAttributeNames?: ExpressionAttributeNameMap;
+    ExpressionAttributeValues?: ExpressionAttributeValueMap;
+    ConditionExpression?: ConditionExpression;
+    ProjectionExpression?: ProjectionExpression;
+    UpdateExpression?: UpdateExpression;
+    FilterExpression?: ConditionExpression;
+}
 export interface TynamoPutItemInput<TSource> {
     Item: TSource;
     ReturnValues?: ReturnValue;
@@ -89,7 +106,7 @@ export interface TynamoPutItemOutput<TSource> {
     ItemCollectionMetrics?: ItemCollectionMetrics;
 }
 export interface TynamoGetItemInput<TSource> {
-    Key: TSource;
+    Key: Partial<TSource>;
     ConsistentRead?: ConsistentRead;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ProjectionExpression?: ProjectionExpression;
@@ -101,7 +118,7 @@ export interface TynamoGetItemOutput<TSource> {
     ConsumedCapacity?: ConsumedCapacity;
 }
 export interface TynamoDeleteItemInput<TSource> {
-    Key: TSource;
+    Key: Partial<TSource>;
     ExpressionAttributeValues?: any;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
@@ -116,7 +133,7 @@ export interface TynamoDeleteItemOutput<TSource> {
     ItemCollectionMetrics?: ItemCollectionMetrics;
 }
 export interface TynamoUpdateItemInput<TSource> {
-    Key: TSource;
+    Key: Partial<TSource>;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ReturnItemCollectionMetrics?: ReturnItemCollectionMetrics;
@@ -165,7 +182,7 @@ export interface TynamoQueryInput<TSource> {
     FilterExpression?: ConditionExpression;
     KeyConditionExpression?: KeyExpression;
     ExpressionAttributeNames?: ExpressionAttributeNameMap;
-    ExpressionAttributeValues?: ExpressionAttributeValueMap;
+    ExpressionAttributeValues?: any;
 }
 export interface TynamoQueryOutput<TSource> {
     $response: AWS.Response<QueryOutput, AWS.AWSError>;
@@ -174,5 +191,36 @@ export interface TynamoQueryOutput<TSource> {
     ScannedCount?: Integer;
     LastEvaluatedKey?: TSource;
     ConsumedCapacity?: ConsumedCapacity;
+}
+export interface TynamoBatchGetItemInput<TSource> {
+    RequestItems: Partial<TSource>[];
+    ReturnConsumedCapacity?: ReturnConsumedCapacity;
+    ConsistentRead?: ConsistentRead;
+    ProjectionExpression?: ProjectionExpression;
+    ExpressionAttributeNames?: ExpressionAttributeNameMap;
+}
+export interface TynamoBatchGetItemOutput<TSource> {
+    $response?: Response<BatchGetItemOutput, AWSError>;
+    Responses?: TSource[];
+    UnprocessedKeys?: Partial<TSource>[];
+    ConsumedCapacity?: ConsumedCapacityMultiple;
+}
+export declare type PutOrDelete<TSource> = {
+    Operation: "put";
+    Item: TSource;
+} | {
+    Operation: "delete";
+    Key: Partial<TSource>;
+};
+export interface TynamoBatchWriteItemInput<TSource> {
+    RequestItems: PutOrDelete<TSource>[];
+    ReturnConsumedCapacity?: ReturnConsumedCapacity;
+    ReturnItemCollectionMetrics?: ReturnItemCollectionMetrics;
+}
+export interface TynamoBatchWriteItemOutput<TSource> {
+    $response: Response<BatchWriteItemOutput, AWSError>;
+    UnprocessedItems?: PutOrDelete<TSource>[];
+    ItemCollectionMetrics?: ItemCollectionMetricsPerTable;
+    ConsumedCapacity?: ConsumedCapacityMultiple;
 }
 //# sourceMappingURL=type.d.ts.map

@@ -1,6 +1,6 @@
-import { DynamoEntity, DynamoProperty, Mapper } from "../index";
+import { DynamoEntity, DynamoProperty, Mapper } from "../../index";
 import { deepEqual, deepStrictEqual } from "assert";
-import { DataType, KeyType } from "../core/type";
+import { DataType, KeyType } from "../../core/type";
 import { AttributeMap } from "aws-sdk/clients/dynamodbstreams";
 
 describe("complex Model : Tree", () => {

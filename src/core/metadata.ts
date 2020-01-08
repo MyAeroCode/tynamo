@@ -9,6 +9,7 @@ import {
 } from "./type";
 import { MetaDataKey } from "./key";
 import { defaultSerializer, defaultDeserializer } from "./utils";
+import { addListener } from "cluster";
 
 class MetaData {
     /**
@@ -128,7 +129,7 @@ class MetaData {
     /**
      * Get the Entity Descriptor associated with a given constructor.
      */
-    public getEntityDescriptorByConstructor<TSource>(TClass: ClassCapture<TSource>): EntityDescriptor<TSource> {
+    public getEntityDescriptorByTClass<TSource>(TClass: ClassCapture<TSource>): EntityDescriptor<TSource> {
         if (Reflect.getMetadata(MetaDataKey.TClass, TClass) === undefined)
             throw new Error(`Can not find ClassInfo. Maybe @DynamoEntity is missing on [${TClass.name}]`);
         if (Reflect.getMetadata(MetaDataKey.Hash, TClass) === undefined)
@@ -160,12 +161,21 @@ class MetaData {
      * Get the keys associated with a given constructor.
      * It contain hash key, and maybe contain sort key.
      */
-    public getKeysByConstructor<TSource>(TClass: ClassCapture<TSource>): PropertyDescriptor<any, any>[] {
-        const entityDescriptor: EntityDescriptor<TSource> = this.getEntityDescriptorByConstructor(TClass);
+    public getKeysByTClass<TSource>(TClass: ClassCapture<TSource>): PropertyDescriptor<any, any>[] {
+        const entityDescriptor: EntityDescriptor<TSource> = this.getEntityDescriptorByTClass(TClass);
         const keys: PropertyDescriptor<any, any>[] = [];
         keys.push(entityDescriptor.hash);
         if (entityDescriptor.sort) keys.push(entityDescriptor.sort);
         return keys;
+    }
+
+    public getAllPropertyNamesByTClass<TSource>(TClass: ClassCapture<TSource>): Set<string> {
+        const set: Set<string> = new Set<string>();
+        const entityDescriptor: EntityDescriptor<TSource> = this.getEntityDescriptorByTClass(TClass);
+        set.add(entityDescriptor.hash.dynamoPropertyName);
+        if (entityDescriptor.sort) set.add(entityDescriptor.sort.dynamoPropertyName);
+        entityDescriptor.attr.forEach((v) => set.add(v.dynamoPropertyName));
+        return set;
     }
 }
 

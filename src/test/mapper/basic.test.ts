@@ -1,6 +1,6 @@
-import { DynamoProperty, Mapper, DynamoEntity } from "../index";
+import { DynamoProperty, Mapper, DynamoEntity } from "../../index";
 import { deepEqual, deepStrictEqual } from "assert";
-import { KeyType, DataType } from "../core/type";
+import { KeyType, DataType } from "../../core/type";
 import { AttributeMap } from "aws-sdk/clients/dynamodbstreams";
 
 describe("basic formation/deformation", () => {

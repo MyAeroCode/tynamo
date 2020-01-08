@@ -19,7 +19,7 @@ declare class MetaData {
     /**
      * Get the Entity Descriptor associated with a given constructor.
      */
-    getEntityDescriptorByConstructor<TSource>(TClass: ClassCapture<TSource>): EntityDescriptor<TSource>;
+    getEntityDescriptorByTClass<TSource>(TClass: ClassCapture<TSource>): EntityDescriptor<TSource>;
     /**
      * Get the TableInfo associated with a given constructor.
      * TableInfo contain informations for create table. (tableName, billingmode, ...)
@@ -29,7 +29,8 @@ declare class MetaData {
      * Get the keys associated with a given constructor.
      * It contain hash key, and maybe contain sort key.
      */
-    getKeysByConstructor<TSource>(TClass: ClassCapture<TSource>): PropertyDescriptor<any, any>[];
+    getKeysByTClass<TSource>(TClass: ClassCapture<TSource>): PropertyDescriptor<any, any>[];
+    getAllPropertyNamesByTClass<TSource>(TClass: ClassCapture<TSource>): Set<string>;
 }
 declare const _: MetaData;
 export default _;

@@ -1,6 +1,5 @@
 import {
     AttributeMap,
-    AttributeValue,
     TableName,
     LocalSecondaryIndexList,
     GlobalSecondaryIndexList,
@@ -12,12 +11,9 @@ import {
     ReturnValue,
     ReturnConsumedCapacity,
     ReturnItemCollectionMetrics,
-    ConditionalOperator,
     ConditionExpression,
     ExpressionAttributeNameMap,
     ExpressionAttributeValueMap,
-    Key,
-    AttributeNameList,
     ConsistentRead,
     ProjectionExpression,
     ConsumedCapacity,
@@ -35,13 +31,17 @@ import {
     ScanOutput,
     BooleanObject,
     KeyExpression,
-    QueryOutput
+    QueryOutput,
+    ConsumedCapacityMultiple,
+    BatchGetItemOutput,
+    ItemCollectionMetricsPerTable,
+    BatchWriteItemOutput
 } from "aws-sdk/clients/dynamodb";
-import { NumberAttributeValue, StringAttributeValue, BinaryAttributeValue } from "aws-sdk/clients/clouddirectory";
+import { Response, AWSError } from "aws-sdk";
 
 export type Chunk<TReturn, TArg> = (arg: TArg) => TReturn;
 export type ChunkOrValue<TSource, TArg> = TSource | Chunk<TSource, TArg>;
-export type ClassCapture<T> = { new (...args: any[]): T };
+export type ClassCapture<T extends {}> = { new (...args: any[]): T };
 
 // The DataType used in DynamoDB.
 export enum DataType {
@@ -139,12 +139,25 @@ export interface TableInformation {
 //  ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 //      Type for Tynamo API.
 //  ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+export interface TynamoExpressionInput {
+    ExpressionAttributeNames?: ExpressionAttributeNameMap;
+    ExpressionAttributeValues?: any;
+    ConditionExpression?: ConditionExpression;
+    ProjectionExpression?: ProjectionExpression;
+    UpdateExpression?: UpdateExpression;
+    FilterExpression?: ConditionExpression;
+}
+
+export interface TynamoExpressionOutput {
+    ExpressionAttributeNames?: ExpressionAttributeNameMap;
+    ExpressionAttributeValues?: ExpressionAttributeValueMap;
+    ConditionExpression?: ConditionExpression;
+    ProjectionExpression?: ProjectionExpression;
+    UpdateExpression?: UpdateExpression;
+    FilterExpression?: ConditionExpression;
+}
+
 export interface TynamoPutItemInput<TSource> {
-    // TableName: TableName;
-    // Item: PutItemInputAttributeMap;
-    // Expected?: ExpectedAttributeMap;
-    // ExpressionAttributeValues?: ExpressionAttributeValueMap;
-    // ConditionalOperator?: ConditionalOperator;
     Item: TSource;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
@@ -163,7 +176,7 @@ export interface TynamoPutItemOutput<TSource> {
 export interface TynamoGetItemInput<TSource> {
     // TableName: TableName;
     // AttributesToGet?: AttributeNameList;
-    Key: TSource;
+    Key: Partial<TSource>;
     ConsistentRead?: ConsistentRead;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ProjectionExpression?: ProjectionExpression;
@@ -179,7 +192,7 @@ export interface TynamoDeleteItemInput<TSource> {
     // TableName: TableName;
     // Expected?: ExpectedAttributeMap;
     // ConditionalOperator?: ConditionalOperator;
-    Key: TSource;
+    Key: Partial<TSource>;
     ExpressionAttributeValues?: any;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
@@ -200,7 +213,7 @@ export interface TynamoUpdateItemInput<TSource> {
     // AttributeUpdates?: AttributeUpdates;
     // Expected?: ExpectedAttributeMap;
     // ConditionalOperator?: ConditionalOperator;
-    Key: TSource;
+    Key: Partial<TSource>;
     ReturnValues?: ReturnValue;
     ReturnConsumedCapacity?: ReturnConsumedCapacity;
     ReturnItemCollectionMetrics?: ReturnItemCollectionMetrics;
@@ -262,8 +275,9 @@ export interface TynamoQueryInput<TSource> {
     FilterExpression?: ConditionExpression;
     KeyConditionExpression?: KeyExpression;
     ExpressionAttributeNames?: ExpressionAttributeNameMap;
-    ExpressionAttributeValues?: ExpressionAttributeValueMap;
+    ExpressionAttributeValues?: any;
 }
+
 export interface TynamoQueryOutput<TSource> {
     $response: AWS.Response<QueryOutput, AWS.AWSError>;
     Items?: TSource[];
@@ -271,4 +285,42 @@ export interface TynamoQueryOutput<TSource> {
     ScannedCount?: Integer;
     LastEvaluatedKey?: TSource;
     ConsumedCapacity?: ConsumedCapacity;
+}
+
+export interface TynamoBatchGetItemInput<TSource> {
+    RequestItems: Partial<TSource>[];
+    ReturnConsumedCapacity?: ReturnConsumedCapacity;
+    ConsistentRead?: ConsistentRead;
+    ProjectionExpression?: ProjectionExpression;
+    ExpressionAttributeNames?: ExpressionAttributeNameMap;
+}
+
+export interface TynamoBatchGetItemOutput<TSource> {
+    $response?: Response<BatchGetItemOutput, AWSError>;
+    Responses?: TSource[];
+    UnprocessedKeys?: Partial<TSource>[];
+    ConsumedCapacity?: ConsumedCapacityMultiple;
+}
+
+export type PutOrDelete<TSource> =
+    | {
+          Operation: "put";
+          Item: TSource;
+      }
+    | {
+          Operation: "delete";
+          Key: Partial<TSource>;
+      };
+
+export interface TynamoBatchWriteItemInput<TSource> {
+    RequestItems: PutOrDelete<TSource>[];
+    ReturnConsumedCapacity?: ReturnConsumedCapacity;
+    ReturnItemCollectionMetrics?: ReturnItemCollectionMetrics;
+}
+
+export interface TynamoBatchWriteItemOutput<TSource> {
+    $response: Response<BatchWriteItemOutput, AWSError>;
+    UnprocessedItems?: PutOrDelete<TSource>[];
+    ItemCollectionMetrics?: ItemCollectionMetricsPerTable;
+    ConsumedCapacity?: ConsumedCapacityMultiple;
 }

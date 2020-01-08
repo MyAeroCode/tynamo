@@ -103,7 +103,7 @@ class MetaData {
     /**
      * Get the Entity Descriptor associated with a given constructor.
      */
-    getEntityDescriptorByConstructor(TClass) {
+    getEntityDescriptorByTClass(TClass) {
         if (Reflect.getMetadata(key_1.MetaDataKey.TClass, TClass) === undefined)
             throw new Error(`Can not find ClassInfo. Maybe @DynamoEntity is missing on [${TClass.name}]`);
         if (Reflect.getMetadata(key_1.MetaDataKey.Hash, TClass) === undefined)
@@ -130,13 +130,22 @@ class MetaData {
      * Get the keys associated with a given constructor.
      * It contain hash key, and maybe contain sort key.
      */
-    getKeysByConstructor(TClass) {
-        const entityDescriptor = this.getEntityDescriptorByConstructor(TClass);
+    getKeysByTClass(TClass) {
+        const entityDescriptor = this.getEntityDescriptorByTClass(TClass);
         const keys = [];
         keys.push(entityDescriptor.hash);
         if (entityDescriptor.sort)
             keys.push(entityDescriptor.sort);
         return keys;
+    }
+    getAllPropertyNamesByTClass(TClass) {
+        const set = new Set();
+        const entityDescriptor = this.getEntityDescriptorByTClass(TClass);
+        set.add(entityDescriptor.hash.dynamoPropertyName);
+        if (entityDescriptor.sort)
+            set.add(entityDescriptor.sort.dynamoPropertyName);
+        entityDescriptor.attr.forEach((v) => set.add(v.dynamoPropertyName));
+        return set;
     }
 }
 const _ = new MetaData();

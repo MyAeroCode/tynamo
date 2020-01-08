@@ -1,6 +1,6 @@
-import { DynamoEntity, DynamoProperty, Mapper } from "../index";
+import { DynamoEntity, DynamoProperty, Mapper } from "../../index";
 import { deepEqual, strictEqual, deepStrictEqual } from "assert";
-import { KeyType, Serializer, Deserializer } from "../core/type";
+import { KeyType, Serializer, Deserializer } from "../../core/type";
 import { AttributeMap } from "aws-sdk/clients/dynamodbstreams";
 
 describe("serializer/deserializer", () => {

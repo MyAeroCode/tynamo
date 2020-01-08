@@ -1,10 +1,11 @@
 import "reflect-metadata";
+import "es6-shim";
 
 // Core Feature.
 import Tynamo from "./core/tynamo";
 import Mapper from "./core/mapper";
 import MetaData from "./core/metadata";
-import ExpressionParser from "./core/expressionParser";
+import ExpressionParser from "./core/expression-parser";
 import {
     DataType,
     KeyType,
@@ -28,7 +29,12 @@ import {
     TynamoScanInput,
     TynamoScanOutput,
     TynamoQueryInput,
-    TynamoQueryOutput
+    TynamoQueryOutput,
+    TynamoBatchGetItemInput,
+    TynamoBatchGetItemOutput,
+    TynamoBatchWriteItemInput,
+    TynamoBatchWriteItemOutput,
+    PutOrDelete
 } from "./core/type";
 import { AttributeMap, AttributeValue } from "aws-sdk/clients/dynamodb";
 
@@ -68,19 +74,10 @@ export {
     TynamoScanInput,
     TynamoScanOutput,
     TynamoQueryInput,
-    TynamoQueryOutput
+    TynamoQueryOutput,
+    TynamoBatchGetItemInput,
+    TynamoBatchGetItemOutput,
+    TynamoBatchWriteItemInput,
+    TynamoBatchWriteItemOutput,
+    PutOrDelete
 };
-
-@DynamoEntity()
-class Cat {
-    @DynamoProperty({ keyType: KeyType.hash })
-    id!: number;
-
-    @DynamoProperty({ keyType: KeyType.attr })
-    name!: string;
-
-    constructor(id: number, name: string) {
-        this.id = id;
-        this.name = name;
-    }
-}

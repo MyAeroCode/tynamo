@@ -1,6 +1,6 @@
-import { DynamoEntity, DynamoProperty, Mapper } from "../index";
+import { DynamoEntity, DynamoProperty, Mapper } from "../../index";
 import chai from "chai";
-import { KeyType } from "../core/type";
+import { KeyType } from "../../core/type";
 
 describe("error", () => {
     @DynamoEntity()

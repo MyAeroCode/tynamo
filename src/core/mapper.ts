@@ -161,7 +161,7 @@ class Mapper {
         }
 
         // Simplify variable name.
-        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByConstructor(TClass);
+        const entityDescriptor: EntityDescriptor<TSource> = MetaData.getEntityDescriptorByTClass(TClass);
         const HASH = entityDescriptor.hash;
         const RANGE = entityDescriptor.sort;
         const ATTRS = entityDescriptor.attr;
@@ -282,7 +282,7 @@ class Mapper {
         // Is it registered in the metadata?
         const TClass: any = Reflect.getMetadata(MetaDataKey.TClass, RootTClass);
         const holder: any = new TClass();
-        const entityDescriptor: EntityDescriptor<any> = MetaData.getEntityDescriptorByConstructor(holder.constructor);
+        const entityDescriptor: EntityDescriptor<any> = MetaData.getEntityDescriptorByTClass(holder.constructor);
 
         // Gets all field descriptor to create the Object.
         const propertyDescriptors: PropertyDescriptor<TTarget, any>[] = [];

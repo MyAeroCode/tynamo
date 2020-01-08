@@ -1,4 +1,4 @@
-import { ChunkOrValue, Serializer, SerializerArg, Deserializer, DeserializerArg, Chunk } from "./type";
+import { SerializerArg, DeserializerArg, Chunk, ClassCapture } from "./type";
 
 /**
  * Default serializer.
