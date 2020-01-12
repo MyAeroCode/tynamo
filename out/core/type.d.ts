@@ -77,6 +77,7 @@ export interface TableInformation {
 export interface TynamoExpressionInput {
     ExpressionAttributeNames?: ExpressionAttributeNameMap;
     ExpressionAttributeValues?: any;
+    KeyConditionExpression?: KeyExpression;
     ConditionExpression?: ConditionExpression;
     ProjectionExpression?: ProjectionExpression;
     UpdateExpression?: UpdateExpression;
@@ -85,6 +86,7 @@ export interface TynamoExpressionInput {
 export interface TynamoExpressionOutput {
     ExpressionAttributeNames?: ExpressionAttributeNameMap;
     ExpressionAttributeValues?: ExpressionAttributeValueMap;
+    KeyConditionExpression?: KeyExpression;
     ConditionExpression?: ConditionExpression;
     ProjectionExpression?: ProjectionExpression;
     UpdateExpression?: UpdateExpression;

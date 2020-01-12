@@ -342,6 +342,7 @@ export class TynamoTable<TSource> {
         Object.assign(
             input,
             ExpressionParser.getFilteredExpressionSet(this.TClass, {
+                KeyConditionExpression: tnmInput.KeyConditionExpression,
                 FilterExpression: tnmInput.FilterExpression,
                 ProjectionExpression: tnmInput.ProjectionExpression,
                 ExpressionAttributeNames: tnmInput.ExpressionAttributeNames,

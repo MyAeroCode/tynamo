@@ -283,6 +283,7 @@ class TynamoTable {
             };
             Object.assign(input, tnmInput);
             Object.assign(input, __1.ExpressionParser.getFilteredExpressionSet(this.TClass, {
+                KeyConditionExpression: tnmInput.KeyConditionExpression,
                 FilterExpression: tnmInput.FilterExpression,
                 ProjectionExpression: tnmInput.ProjectionExpression,
                 ExpressionAttributeNames: tnmInput.ExpressionAttributeNames,
