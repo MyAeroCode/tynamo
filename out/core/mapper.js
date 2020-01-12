@@ -34,20 +34,19 @@ class Mapper {
     }
     /**
      * Convert EntityArray to AttributeValue(L).
-     * EntityArray should not contain scalar.
-     *
-     * For example,
-     *  formationEntityArray([new Cat(0, "a"), new Cat(1, "b")], Cat) =>
-     *  { L :
-     *      [
-     *          {M: {id:{N : "0"}, name:{S : "a"}}},
-     *          {M: {id:{N : "1"}, name:{S : "b"}}}
-     *      ]
-     *  }
      */
     formationList(source, TClass) {
+        let value = [];
+        if (TClass === Number)
+            value = source.map((v) => this.formationNumber(Number(v)));
+        else if (TClass === String)
+            value = source.map((v) => this.formationString(String(v)));
+        else if (TClass === Boolean)
+            value = source.map((v) => this.formationBoolean(v));
+        else
+            value = source.map((v) => this.formationMap(v, TClass));
         return {
-            [type_1.DataType.L]: source.map((v) => this.formationMap(v, TClass))
+            [type_1.DataType.L]: value
         };
     }
     /**
@@ -175,18 +174,18 @@ class Mapper {
     }
     /**
      * Convert (L) to EntityArray.
-     * L should have only one entity type.
-     *
-     * For example,
-     *  deformationEntityArray({ L :
-     *      [
-     *          {M: {id:{N : "0"}, name:{S : "a"}}},
-     *          {M: {id:{N : "1"}, name:{S : "b"}}}
-     *      ]
-     *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */
     deformationList(target, TClass) {
-        return target[type_1.DataType.L].map((v) => this.deformationMap(v, TClass));
+        let mapper;
+        if (TClass === Number)
+            mapper = (v) => this.deformationNumber(v);
+        else if (TClass === String)
+            mapper = (v) => this.deformationString(v);
+        else if (TClass === Boolean)
+            mapper = (v) => this.deformationBoolean(v);
+        else
+            mapper = (v) => this.deformationMap(v, TClass);
+        return target[type_1.DataType.L].map(mapper);
     }
     /**
      * Convert (M) to entity.

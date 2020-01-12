@@ -52,20 +52,15 @@ class Mapper {
 
     /**
      * Convert EntityArray to AttributeValue(L).
-     * EntityArray should not contain scalar.
-     *
-     * For example,
-     *  formationEntityArray([new Cat(0, "a"), new Cat(1, "b")], Cat) =>
-     *  { L :
-     *      [
-     *          {M: {id:{N : "0"}, name:{S : "a"}}},
-     *          {M: {id:{N : "1"}, name:{S : "b"}}}
-     *      ]
-     *  }
      */
     formationList<TSource>(source: TSource[], TClass: ClassCapture<TSource>): { L: ListAttributeValue } {
+        let value: ListAttributeValue = [];
+        if ((TClass as any) === Number) value = source.map((v) => this.formationNumber(Number(v as any)));
+        else if ((TClass as any) === String) value = source.map((v) => this.formationString(String(v as any)));
+        else if ((TClass as any) === Boolean) value = source.map((v) => this.formationBoolean(v as any));
+        else value = source.map((v) => this.formationMap(v, TClass));
         return {
-            [DataType.L]: source.map((v) => this.formationMap(v, TClass))
+            [DataType.L]: value
         };
     }
 
@@ -211,18 +206,14 @@ class Mapper {
 
     /**
      * Convert (L) to EntityArray.
-     * L should have only one entity type.
-     *
-     * For example,
-     *  deformationEntityArray({ L :
-     *      [
-     *          {M: {id:{N : "0"}, name:{S : "a"}}},
-     *          {M: {id:{N : "1"}, name:{S : "b"}}}
-     *      ]
-     *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */
-    deformationList<TTarget>(target: { L: MapAttributeValue[] }, TClass: ClassCapture<TTarget>): TTarget[] {
-        return (target[DataType.L] as any[]).map((v) => this.deformationMap(v, TClass));
+    deformationList<TTarget>(target: { L: ListAttributeValue }, TClass: ClassCapture<TTarget>): TTarget[] {
+        let mapper: (v: AttributeValue) => TTarget;
+        if ((TClass as any) === Number) mapper = (v) => this.deformationNumber(v as any) as any;
+        else if ((TClass as any) === String) mapper = (v) => this.deformationString(v as any) as any;
+        else if ((TClass as any) === Boolean) mapper = (v) => this.deformationBoolean(v as any) as any;
+        else mapper = (v) => this.deformationMap(v as any, TClass);
+        return target[DataType.L].map(mapper);
     }
 
     /**

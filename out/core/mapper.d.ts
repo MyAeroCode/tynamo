@@ -29,16 +29,6 @@ declare class Mapper {
     };
     /**
      * Convert EntityArray to AttributeValue(L).
-     * EntityArray should not contain scalar.
-     *
-     * For example,
-     *  formationEntityArray([new Cat(0, "a"), new Cat(1, "b")], Cat) =>
-     *  { L :
-     *      [
-     *          {M: {id:{N : "0"}, name:{S : "a"}}},
-     *          {M: {id:{N : "1"}, name:{S : "b"}}}
-     *      ]
-     *  }
      */
     formationList<TSource>(source: TSource[], TClass: ClassCapture<TSource>): {
         L: ListAttributeValue;
@@ -87,18 +77,9 @@ declare class Mapper {
     }): string[];
     /**
      * Convert (L) to EntityArray.
-     * L should have only one entity type.
-     *
-     * For example,
-     *  deformationEntityArray({ L :
-     *      [
-     *          {M: {id:{N : "0"}, name:{S : "a"}}},
-     *          {M: {id:{N : "1"}, name:{S : "b"}}}
-     *      ]
-     *  }, Cat) => [new Cat(0, "a"), new Cat(1, "b")]
      */
     deformationList<TTarget>(target: {
-        L: MapAttributeValue[];
+        L: ListAttributeValue;
     }, TClass: ClassCapture<TTarget>): TTarget[];
     /**
      * Convert (M) to entity.
