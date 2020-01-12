@@ -108,6 +108,10 @@ class ExpressionParser {
             filteredExpressionSet.UpdateExpression = expressionSet.UpdateExpression;
             unabledExpressions.push(expressionSet.UpdateExpression);
         }
+        if (expressionSet.KeyConditionExpression) {
+            filteredExpressionSet.KeyConditionExpression = expressionSet.KeyConditionExpression;
+            unabledExpressions.push(expressionSet.KeyConditionExpression);
+        }
         // Parse names and values.
         if (unabledExpressions.length) {
             filteredExpressionSet.ExpressionAttributeNames = this.getExpressionAttributeNames(TClass, unabledExpressions, expressionSet.ExpressionAttributeNames);
