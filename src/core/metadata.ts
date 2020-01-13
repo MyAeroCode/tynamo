@@ -49,6 +49,7 @@ class MetaData {
             if (reflectedSourceDataType === String) args.dataType = DataType.S;
             else if (reflectedSourceDataType === Number) args.dataType = DataType.N;
             else if (reflectedSourceDataType === Boolean) args.dataType = DataType.BOOL;
+            else if (reflectedSourceDataType === Buffer) args.dataType = DataType.B;
             else throw new Error(`please specify dataType of [${TClass.name}.${sourcePropertyName}]`);
         }
 

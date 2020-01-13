@@ -30,7 +30,7 @@ class Mapper {
         return { S: source };
     }
 
-    formationBinary(source: string): { B: BinaryAttributeValue } {
+    formationBinary(source: Buffer): { B: Buffer } {
         return { B: source };
     }
 
@@ -46,7 +46,7 @@ class Mapper {
         return { SS: source };
     }
 
-    formationBinarySet(source: string[]): { BS: BinarySetAttributeValue } {
+    formationBinarySet(source: Buffer[]): { BS: BinarySetAttributeValue } {
         return { BS: source };
     }
 
@@ -58,6 +58,7 @@ class Mapper {
         if ((TClass as any) === Number) value = source.map((v) => this.formationNumber(Number(v as any)));
         else if ((TClass as any) === String) value = source.map((v) => this.formationString(String(v as any)));
         else if ((TClass as any) === Boolean) value = source.map((v) => this.formationBoolean(v as any));
+        else if ((TClass as any) === Buffer) value = source.map((v) => this.formationBinary(v as any));
         else value = source.map((v) => this.formationMap(v, TClass));
         return {
             [DataType.L]: value
@@ -180,8 +181,8 @@ class Mapper {
         return Number(target.N);
     }
 
-    deformationBinary(target: { B: BinaryAttributeValue }): string {
-        return String(target.B);
+    deformationBinary(target: { B: Buffer }): Buffer {
+        return target.B;
     }
 
     deformationString(target: { S: StringAttributeValue }): string {
@@ -196,8 +197,8 @@ class Mapper {
         return target.NS.map((v) => Number(v));
     }
 
-    deformationBinarySet(target: { BS: BinarySetAttributeValue }): string[] {
-        return target.BS.map((v) => String(v));
+    deformationBinarySet(target: { BS: Buffer[] }): Buffer[] {
+        return target.BS;
     }
 
     deformationStringSet(target: { SS: StringSetAttributeValue }): string[] {
@@ -212,6 +213,7 @@ class Mapper {
         if ((TClass as any) === Number) mapper = (v) => this.deformationNumber(v as any) as any;
         else if ((TClass as any) === String) mapper = (v) => this.deformationString(v as any) as any;
         else if ((TClass as any) === Boolean) mapper = (v) => this.deformationBoolean(v as any) as any;
+        else if ((TClass as any) === Buffer) mapper = (v) => this.deformationBinary(v as any) as any;
         else mapper = (v) => this.deformationMap(v as any, TClass);
         return target[DataType.L].map(mapper);
     }

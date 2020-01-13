@@ -66,10 +66,10 @@ describe("basic formation/deformation", () => {
     {
         @DynamoEntity()
         class Entity {
-            @DynamoProperty({ keyType: KeyType.hash, dataType: DataType.B })
-            binary!: string;
+            @DynamoProperty({ keyType: KeyType.hash })
+            binary!: Buffer;
         }
-        const source: Entity = Object.assign(new Entity(), { binary: "This is binary" });
+        const source: Entity = Object.assign(new Entity(), { binary: Buffer.from("Hello, World!") });
         let dynamo: AttributeMap;
         let recover: Entity;
 
@@ -78,7 +78,7 @@ describe("basic formation/deformation", () => {
             deepEqual(
                 dynamo,
                 {
-                    binary: { B: "This is binary" }
+                    binary: { B: Buffer.from("Hello, World!") }
                 },
                 "-"
             );

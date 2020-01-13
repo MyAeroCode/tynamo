@@ -43,6 +43,8 @@ class Mapper {
             value = source.map((v) => this.formationString(String(v)));
         else if (TClass === Boolean)
             value = source.map((v) => this.formationBoolean(v));
+        else if (TClass === Buffer)
+            value = source.map((v) => this.formationBinary(v));
         else
             value = source.map((v) => this.formationMap(v, TClass));
         return {
@@ -155,7 +157,7 @@ class Mapper {
         return Number(target.N);
     }
     deformationBinary(target) {
-        return String(target.B);
+        return target.B;
     }
     deformationString(target) {
         return target.S;
@@ -167,7 +169,7 @@ class Mapper {
         return target.NS.map((v) => Number(v));
     }
     deformationBinarySet(target) {
-        return target.BS.map((v) => String(v));
+        return target.BS;
     }
     deformationStringSet(target) {
         return target.SS;
@@ -183,6 +185,8 @@ class Mapper {
             mapper = (v) => this.deformationString(v);
         else if (TClass === Boolean)
             mapper = (v) => this.deformationBoolean(v);
+        else if (TClass === Buffer)
+            mapper = (v) => this.deformationBinary(v);
         else
             mapper = (v) => this.deformationMap(v, TClass);
         return target[type_1.DataType.L].map(mapper);

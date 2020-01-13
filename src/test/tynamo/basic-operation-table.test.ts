@@ -10,7 +10,7 @@ describe("basic operation table", () => {
     // TestCase 01
     // Create, Describe, Delete Table.
     {
-        @DynamoEntity()
+        @DynamoEntity({ TableName: Math.random().toString() })
         class Entity {
             @DynamoProperty({ keyType: KeyType.hash })
             str!: string;

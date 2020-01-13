@@ -12,7 +12,7 @@ describe("basic operation item", () => {
         endpoint: "http://localhost:8000"
     });
 
-    @DynamoEntity()
+    @DynamoEntity({ TableName: Math.random().toString() })
     class Cat {
         @DynamoProperty({ keyType: KeyType.hash })
         id!: number;
@@ -22,13 +22,17 @@ describe("basic operation item", () => {
 
         @DynamoProperty({ keyType: KeyType.attr })
         age!: number;
+
+        @DynamoProperty({ keyType: KeyType.attr })
+        bin!: Buffer;
     }
 
     const catTable = tynamo.getTableOf(Cat);
     const badCat: Cat = plainToClass(Cat, {
         id: 666,
         name: "garfield",
-        age: 3
+        age: 3,
+        bin: Buffer.from("Hello, World!")
     });
 
     it("put/get", async () => {
@@ -40,7 +44,7 @@ describe("basic operation item", () => {
     });
 
     it("put/update/get", async () => {
-        @DynamoEntity()
+        @DynamoEntity({ TableName: Math.random().toString() })
         class Args {
             @DynamoProperty({ keyType: KeyType.hash })
             age!: number;
@@ -60,7 +64,8 @@ describe("basic operation item", () => {
             plainToClass(Cat, {
                 id: 666,
                 name: "garfield",
-                age: 22
+                age: 22,
+                bin: Buffer.from("Hello, World!")
             })
         );
     });

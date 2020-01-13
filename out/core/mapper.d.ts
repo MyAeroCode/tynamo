@@ -1,5 +1,6 @@
+/// <reference types="node" />
 import { FormationMask, PropertyDescriptor, ClassCapture } from "./type";
-import { AttributeMap, ListAttributeValue, MapAttributeValue, BinaryAttributeValue, BooleanAttributeValue } from "aws-sdk/clients/dynamodb";
+import { AttributeMap, ListAttributeValue, MapAttributeValue, BooleanAttributeValue } from "aws-sdk/clients/dynamodb";
 import { NumberSetAttributeValue, StringSetAttributeValue, BinarySetAttributeValue, NumberAttributeValue } from "aws-sdk/clients/dynamodbstreams";
 import { StringAttributeValue } from "aws-sdk/clients/clouddirectory";
 /**
@@ -12,8 +13,8 @@ declare class Mapper {
     formationString(source: string): {
         S: StringAttributeValue;
     };
-    formationBinary(source: string): {
-        B: BinaryAttributeValue;
+    formationBinary(source: Buffer): {
+        B: Buffer;
     };
     formationBoolean(source: boolean): {
         BOOL: BooleanAttributeValue;
@@ -24,7 +25,7 @@ declare class Mapper {
     formationStringSet(source: string[]): {
         SS: StringSetAttributeValue;
     };
-    formationBinarySet(source: string[]): {
+    formationBinarySet(source: Buffer[]): {
         BS: BinarySetAttributeValue;
     };
     /**
@@ -58,8 +59,8 @@ declare class Mapper {
         N: NumberAttributeValue;
     }): number;
     deformationBinary(target: {
-        B: BinaryAttributeValue;
-    }): string;
+        B: Buffer;
+    }): Buffer;
     deformationString(target: {
         S: StringAttributeValue;
     }): string;
@@ -70,8 +71,8 @@ declare class Mapper {
         NS: NumberSetAttributeValue;
     }): number[];
     deformationBinarySet(target: {
-        BS: BinarySetAttributeValue;
-    }): string[];
+        BS: Buffer[];
+    }): Buffer[];
     deformationStringSet(target: {
         SS: StringSetAttributeValue;
     }): string[];
