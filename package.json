@@ -1,11 +1,11 @@
 {
     "name": "tynamo",
-    "version": "1.6.4",
+    "version": "1.6.5",
     "main": "out/index.js",
     "types": "out/index.d.ts",
     "scripts": {
         "test": "mocha -r ts-node/register ./**/*.test.ts --timeout 60000",
-        "build": "tsc"
+        "install": "tsc"
     },
     "keywords": [
         "dynamodb",
